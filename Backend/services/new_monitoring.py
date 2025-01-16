@@ -593,7 +593,7 @@ def run_scan():
     plt.show()
 
 
-def run_scanPortRange(from_port, to_port):
+def run_scanPortRange(from_port, to_port, socketio):
     global start
     start = True
     from_port = (int(from_port) - 1)
@@ -625,7 +625,7 @@ def run_scanPortRange(from_port, to_port):
     rez = ''
     nom = from_port
 
-    rez = {}
+    rez = {"scanResult": []}
 
     for port_nom, port in portName[from_port:to_port]:
         # root.update()
@@ -660,10 +660,10 @@ def run_scanPortRange(from_port, to_port):
 
             if status == '2':
 
-                print(
-                    f"Port({nom}). {port}  ({ifAlias})  is DOWN : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
+                # print(
+                #     f"Port({nom}). {port}  ({ifAlias})  is DOWN : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
                 # rez += f"Port({nom}).  {port}  ({ifAlias})  is DOWN : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err},outError {out_err}" + '\n'
-                rez[nom] = {
+                new_info = {
                         "number": nom,
                         "port": port.prettyPrint(),
                         "ifAlias": f"{ifAlias.prettyPrint()} is DOWN",
@@ -673,13 +673,15 @@ def run_scanPortRange(from_port, to_port):
                         "inError": in_err,
                         "outError": out_err
                     }
+                # Send info directly via webSocket
+                socketio.emit("runScanPortRange", new_info)
 
             elif status == '1':
 
-                print(
-                    f"Port({nom}). {port}  ({ifAlias})  is UP : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
+                # print(
+                #     f"Port({nom}). {port}  ({ifAlias})  is UP : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
                 # rez += f"Port({nom}). {port}  ({ifAlias})  is UP : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}" + '\n'
-                rez[nom] = {
+                new_info = {
                         "number": nom,
                         "port": port.prettyPrint(),
                         "ifAlias": f"{ifAlias.prettyPrint()} is UP",
@@ -689,10 +691,15 @@ def run_scanPortRange(from_port, to_port):
                         "inError": in_err,
                         "outError": out_err
                     }
+                rez["scanResult"].append(new_info)
+                # Send info directly via webSocket
+                socketio.emit("runScanPortRange", new_info)
         else:
             print(f"Failed to get SNMP data for port {port}")
+            # Send info directly via webSocket
+            socketio.emit("error", {"error": f"failed to get data for {port}"})
     # TODO: result has to be mapped to a DTO and passed to the websocked in order to display each row when ready not bulk them all at once
-    return rez
+    # return rez
     # oid_SysName = '1.3.6.1.2.1.1.5'
     # SysName = snmp_walk1(target, oid_SysName, community)
     # Name = SysName
