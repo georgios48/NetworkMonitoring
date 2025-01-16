@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/pages/ui_page.dart';
 import 'package:local_network_monitoring/themes/theme_cubit.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -19,6 +20,10 @@ void main() async {
     windowManager.show();
     windowManager.focus();
     windowManager.setResizable(false);
+
+    // Initialize WebSocket
+    final apiService = SocketService();
+    apiService.initializeWebSocket();
   });
 
   runApp(const MyApp());

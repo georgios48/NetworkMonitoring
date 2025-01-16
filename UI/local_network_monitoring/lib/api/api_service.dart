@@ -1,25 +1,49 @@
-import 'package:dio/dio.dart';
-import 'package:local_network_monitoring/api/routes.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-class APIService {
-  final APIRoutes _apiRoutes = APIRoutes();
-  final dio = Dio();
+class SocketService {
+  static final SocketService _instance = SocketService._internal();
+
+  factory SocketService() {
+    return _instance;
+  }
+
+  SocketService._internal();
+
+  late IO.Socket socket;
+  bool _isInitialized = false;
+
+  void initializeWebSocket() {
+    if (!_isInitialized) {
+      socket = IO.io(
+          "ws://127.0.0.1:8001",
+          IO.OptionBuilder()
+              .setTransports(["websocket"])
+              .enableAutoConnect()
+              .build());
+      _isInitialized = true;
+    }
+  }
+
+  IO.Socket getSocketChannel() {
+    return socket;
+  }
+}
+
+class ApiService {
+  final SocketService socketService = SocketService();
+
+  ApiService() {
+    // Init socket
+    socketService.initializeWebSocket();
+  }
 
   // Get info for ports scanned in given range
   Future<void> getInfoForPortsInRange(String fromRange, String toRange) async {
-    // Convert body in a way that backend can read it
-    final data = {"toPort": toRange, "fromPort": fromRange};
+    final data = {"toPort": '10', "fromPort": "1"};
+    final socket = socketService.getSocketChannel();
 
-    try {
-      final response = await dio.post(_apiRoutes.scanPortsRangeURL, data: data);
-      print("Vs tochno: ${response}");
-    } on DioException catch (e) {
-      if (e.response != null) {
-        print(
-            "Failed to post: ${e.response?.statusCode} ${e.response?.statusMessage}");
-      } else {
-        print("Unexpected error: ${e.message}");
-      }
-    }
+    socket.emit("/runScanPortRange", {
+      "data": {"fromPort": "1", "toPort": "10"}
+    });
   }
 }

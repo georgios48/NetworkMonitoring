@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/themes/theme_cubit.dart';
 import 'package:local_network_monitoring/widgets/button.dart';
 import 'package:local_network_monitoring/widgets/history_textbox.dart';
@@ -177,9 +178,12 @@ class ScanRangePorts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ApiService service = ApiService();
     return CustomButton(
       buttonText: "Сканиране на диапазон от портове",
-      customOnPressed: () {},
+      customOnPressed: () {
+        service.getInfoForPortsInRange("1", "10");
+      },
     );
   }
 }

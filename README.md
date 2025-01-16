@@ -1,13 +1,28 @@
 # local_network_monitoring
 Diploma project, local network monitoring using PYSNMP and Flutter for the UI
 
+Python version used: 3.11.1
+Flutter 3.22.2 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 761747bfc5 (7 months ago) • 2024-06-05 22:15:13 +0200
+Engine • revision edd8546116
+Tools • Dart 3.4.3 • DevTools 2.34.3
+
 To run backend:
     1. Create venv:
         ```python -m venv venv```
+        Or if using "pyenv":
+            ```1. pyenv install 3.11.1```
+            ```2. /Users/yourname/.pyenv/versions/3.10.9/bin/python -m venv venv```
+
     2. Start venv:
-        On MacOS: ```python venv/bin/activate```
-        On Windows: ```python venv/Scripts/activate```
-    3. Start the "network_monitoring" file inside services
+        On MacOS: ```source venv/bin/activate```
+        On Windows: ```source venv/Scripts/activate```
+    3. Install the python requirements:
+        ```pip install -r Backend/requirements.txt```
+    4. Make sure the correct python interpretes is selected.
+    5. Start the service:
+        1. Go to "Backend" directory and execute:
+            ```python app.py```
 
 To run UI:
     1. Make sure no leftovers in the project are left:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-// ignore: unused_import
+import 'package:local_network_monitoring/api/api_service.dart';
 import "package:local_network_monitoring/pages/ui/utils/helper_widgets.dart";
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:window_manager/window_manager.dart';
 
 class UiPage extends StatefulWidget {
@@ -11,6 +12,65 @@ class UiPage extends StatefulWidget {
 }
 
 class _UiPageState extends State<UiPage> {
+  late IO.Socket channel;
+  List<String> bigTerminalMessages = [];
+
+  @override
+  @override
+  void initState() {
+    // Handshake with a WebSocket
+    SocketService socketService = SocketService();
+    socketService.initializeWebSocket();
+    channel = socketService.getSocketChannel();
+
+    // Configure WebSocket listeners, to listen on changes so they can update the variables responsible for the UI
+    _adjustListeners();
+
+    super.initState();
+  }
+
+  void _adjustListeners() {
+    // Scan port range listener
+    channel.on(
+      "runScanPortRange",
+      (data) {
+        // TODO: map the data to a DTO object and append it to a variable or something,
+        // which will be listened by a provider and update the UI if needed
+        print(data);
+      },
+    );
+
+    // Errors listener
+    channel.on(
+      "error",
+      (data) {
+        // TODO: map the data to a DTO object and append it to a variable or something,
+        // which will be listened by a provider and update the UI if needed
+        print(data);
+      },
+    );
+
+    // Connection listeners
+    channel.on(
+      "connection",
+      (data) {
+        // TODO: map the data to a DTO object and append it to a variable or something,
+        // which will be listened by a provider and update the UI if needed
+        print(data);
+      },
+    );
+
+    // TODO: Other endpoints listener
+  }
+
+  @override
+  void dispose() {
+    channel.disconnect();
+    channel.dispose();
+
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     //! By double clicking, return the window into original position
@@ -94,6 +154,7 @@ class _UiPageState extends State<UiPage> {
                           alignment: Alignment.center, child: ToPortField()),
                     ),
 
+                    // TODO: make button disabled if range isnt provided
                     // Scan range of ports button and scan all ports button
                     Expanded(
                       child: Align(
