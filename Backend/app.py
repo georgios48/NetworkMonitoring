@@ -1,28 +1,34 @@
 """Flask Application"""
 
-from flask import Flask, abort, json, jsonify, request
+from flask import Flask, json
+from flask_socketio import SocketIO, emit
 from services.new_monitoring import run_scanPortRange
-from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 
-@app.route('/api/runScanPortRange', methods=['POST'])
-def run_scan_port_range():
+# Enable usage of websockets
+socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
+socketio.init_app(app)
+
+@socketio.on('/runScanPortRange')
+def run_scan_port_range(data):
     """Run Scan Port Range"""
 
-    if not request.json or 'toPort' not in request.json or 'fromPort' not in request.json:
-        return abort(400, description="Invalid data")
+    print(data)
 
-    to_port = request.json['toPort']
-    from_port = request.json['fromPort']
+    to_port = data["data"].get("toPort", None)
+    from_port = data["data"].get("fromPort", None)
 
-    result_from_scanning = run_scanPortRange(from_port, to_port)
+    if to_port is None or from_port is None:
+        # TODO: think of a way to break the code here because backend blows
+        emit("error", "Invalid port data - 'from port' or 'to port' cannot be empty")
 
-    return jsonify(result_from_scanning), 200
+    run_scanPortRange(from_port, to_port, socketio)
 
 
-# ----- Error Handling -----
-@app.errorhandler(HTTPException)
+# ----- Error Handling ----- #
+# TODO: maybe useless because of websockets, they dont return HTTP exception
+@app.errorhandler(Exception)
 def handle_exception(e):
     """Return JSON instead of HTML for HTTP errors."""
 
@@ -37,5 +43,20 @@ def handle_exception(e):
     response.content_type = "application/json"
     return response
 
+# ----- Socket Consumer ----- #
+@socketio.on('connect')
+def handle_connect():
+    """Handles connecting to WebSocket"""
+
+    print("WebSocket client connected")
+    emit('connection', {"connection": "Connected to WebSocket!"})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handles disconnecting to WebSocket"""
+
+    print("Disconnection WebSocket client")
+    emit('connection', {"connection": "Disconnected from WebSocket!"})
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=8001)
+    socketio.run(app, debug=True, port=8001)
