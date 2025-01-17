@@ -1,8 +1,8 @@
 """Flask Application"""
 
-from flask import Flask, json
+from flask import Flask, json, request
 from flask_socketio import SocketIO, emit
-from services.new_monitoring import run_scanPortRange
+from services.new_monitoring import get_device_info, run_scanPortRange
 
 app = Flask(__name__)
 
@@ -10,38 +10,37 @@ app = Flask(__name__)
 socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 socketio.init_app(app)
 
+# ---- Helper Functions ----- #
+def is_any_none(*args):
+    """Checks if any of the element is none"""
+
+    return any(arg is None for arg in args)
+
+# ----- Endpoints ----- #
 @socketio.on('/runScanPortRange')
 def run_scan_port_range(data):
     """Run Scan Port Range"""
 
-    print(data)
-
     to_port = data["data"].get("toPort", None)
     from_port = data["data"].get("fromPort", None)
 
-    if to_port is None or from_port is None:
-        # TODO: think of a way to break the code here because backend blows
+    if is_any_none(to_port, from_port):
         emit("error", "Invalid port data - 'from port' or 'to port' cannot be empty")
+    else:
+        run_scanPortRange(from_port, to_port, socketio)
 
-    run_scanPortRange(from_port, to_port, socketio)
+@app.route("/displayDeviceInfo", methods=["POST"])
+def display_device_info(data):
+    """Displays info for the device"""
 
+    oid = data["data"].get("oid", None)
+    ip_target = data["data"].get("ipTarget", None)
+    community = data["community"].get("community", None)
 
-# ----- Error Handling ----- #
-# TODO: maybe useless because of websockets, they dont return HTTP exception
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Return JSON instead of HTML for HTTP errors."""
-
-    response = e.get_response()
-
-    # replace the body with JSON
-    response.data = json.dumps({
-        "code": e.code,
-        "name": e.name,
-        "description": e.description,
-    })
-    response.content_type = "application/json"
-    return response
+    if is_any_none(oid, ip_target, community):
+        emit("error", "Invalid oID, IP or community")
+    else:
+        get_device_info(oid, ip_target, community, socketio)
 
 # ----- Socket Consumer ----- #
 @socketio.on('connect')
