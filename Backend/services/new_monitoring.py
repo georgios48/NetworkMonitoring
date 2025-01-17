@@ -438,160 +438,6 @@ def show_info():
     root.update()
 
 
-def run_scan():
-
-    update_comboboxIP()
-    root.update()
-    global start
-    start = True
-    x = []
-    x1 = []
-    y = []
-    y1 = []
-    portsw = []
-    In = []
-    Out = []
-
-    info_net_dev_oid = '1.3.6.1.2.1.1'  #'1.3.6.1.2.1.1'
-
-    target = text_ip.get()  #'194.141.40.236'  # IP адрес на вашия суич
-    community = text_community.get()  #'public'  # SNMP community string
-    oid_ifInOctets = '1.3.6.1.2.1.2.2.1.10'  # OID за входящ трафик
-    oid_ifOutOctets = '1.3.6.1.2.1.2.2.1.16'  # OID за изходящ трафик
-    oid_portName = '1.3.6.1.2.1.2.2.1.2'
-    oid_portStatus = '1.3.6.1.2.1.2.2.1.8'
-    oid_vlan_id_onPort = '1.3.6.1.2.1.17.7.1.4.5.1.1'#1.3.6.1.2.1.17.7.1.4.5.1.1
-    oid_port_outerr = '1.3.6.1.2.1.2.2.1.20'
-    oid_port_inerr = '1.3.6.1.2.1.2.2.1.14'
-    oid_ifAlias = '1.3.6.1.2.1.31.1.1.1.18'#
-    oid_if_name= '1.3.6.1.2.1.31.1.1.1.1'
-    try:
-        portName = snmp_walk(target, oid_portName, community)
-    # info_net_dev = snmp_walk1(target,info_net_dev_oid,community)
-    except:
-        print("Error snmp ....")
-    rez = ''
-    nom = 0
-
-    rez = ''
-    result_text.delete(1.0, tk.END)
-
-    for port_nom, port in portName:  # Пример с 4 порта
-        root.update()
-        if start is not True: break
-        nom += 1
-        in_octets1 = get_snmp_data(target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
-        time.sleep(1)
-        in_octets2 = get_snmp_data(target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
-
-        out_octets1 = get_snmp_data(target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
-        time.sleep(1)
-        out_octets2 = get_snmp_data(target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
-        in_err = get_snmp_data(target, community, f'{oid_port_inerr}.{port_nom[-1]}')
-        out_err = get_snmp_data(target, community, f'{oid_port_outerr}.{port_nom[-1]}')
-        # print(in_octets)
-        status = get_port_status(target, community, f'{oid_portStatus}.{port_nom[-1]}')
-        vlan_id = get_port_vlan(target, community, f'{oid_vlan_id_onPort}.{port_nom[-1]}')
-        ifAlias = get_ifAlias(target, community, f'{oid_ifAlias}.{port_nom[-1]}')
-        namePort=get_ifAlias(target, community, f'{oid_if_name}.{port_nom[-1]}')
-        InMbit = bytes_to_megabits(in_octets1, in_octets2)
-        OutMbit = bytes_to_megabits(out_octets1, out_octets2)
-        # result_text.delete(1.0, tk.END)
-
-        if in_octets1 is not None and out_octets1 is not None and nom is not None and InMbit is not None and OutMbit is not None and in_err is not None and out_err is not None:
-
-            portsw.append('(' + str(nom) + ')')
-            In.append(InMbit)
-
-            Out.append(OutMbit)
-
-            y.append(in_err)
-
-            y1.append(out_err)
-
-            #
-            # if in_err != 0.0:
-            #     x.append('('+str(nom)+')')
-            #     y.append(in_err)
-            # if out_err != 0.0:
-            #     x1.append('('+str(nom)+')')
-            #     y1.append(out_err)
-            if status == '2':
-
-                print(
-                    f"Port({nom}). {port}  ({ifAlias})  is DOWN : vlan ID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
-                rez += f"Port({nom}).  {port}  ({ifAlias})  is DOWN : vlan ID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err},outError {out_err}" + '\n'
-                result_text.insert(tk.END, rez)
-                result_text.see("end")
-                root.update()
-            elif status == '1':
-
-                print(
-                    f"Port({nom}). {port}   ({ifAlias})  is UP : vlan ID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
-                rez += f"Port({nom}). {port}   ({ifAlias})  is UP : vlan ID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}" + '\n'
-                result_text.insert(tk.END, rez)
-                result_text.see("end")
-                root.update()
-        else:
-            print(f"Failed to get SNMP data for port {port}")
-        #result_text.insert(tk.END, rez)
-        #root.update()
-    #result_text.insert(tk.END, rez + '\n')
-
-
-    oid_SysName = '1.3.6.1.2.1.1.5'
-    SysName = snmp_walk1(target, oid_SysName, community)
-    Name = SysName
-
-    print("SysName")
-    #    print(errData)
-    a = Name[0].split('=')
-    print(a[1])
-    f = lambda x: round(x, 3) if x != 0 else ' '
-
-    plt.subplot(4, 1, 1)
-    plt.bar(portsw, y, label='InError', color='blue')
-    for i in range(len(y)):
-        print(f(y[i]))
-        plt.annotate(str(f(y[i])), xy=(portsw[i], y[i]), ha='center', va='bottom')
-    # plt.subplot(4, 1, 1)
-    plt.ylabel('Входящи  грешки')
-    # plt.xlabel('Номер на порт')
-
-    plt.title(f' {target} - ({a[1]})')
-    plt.legend()
-    plt.subplot(4, 1, 2)
-    plt.bar(portsw, y1, label='OutError', color='skyblue')
-    plt.ylabel('Изходящи грешки')
-
-    for j in range(len(y1)):
-        print(f(y1[j]))
-        plt.annotate(str(f(y1[j])), xy=(portsw[j], y1[j]), ha='center', va='bottom')
-    # plt.xlabel('Номер на порт')
-
-    # plt.title(f'{target}')
-    plt.legend()
-    # plt.subplot(4, 1, 2)
-    plt.subplot(4, 1, 3)
-    plt.bar(portsw, In, label='InMbps', color='green')
-    for k in range(len(In)):
-        plt.annotate(str(f(In[k])), xy=(portsw[k], In[k]), ha='center', va='bottom')
-    plt.ylabel('Входящ трафик (Mbps)')
-    plt.legend()
-    plt.subplot(4, 1, 4)
-    # plt.subplot(4, 1, 3)
-    plt.bar(portsw, Out, label='OutMbps', color='orange')
-
-    for m in range(len(Out)):
-        plt.annotate(str(f(Out[m])), xy=(portsw[m], Out[m]), ha='center', va='bottom')
-    plt.xlabel('Номер на порт')
-    plt.ylabel('Изходящ трафик (Mbps)')
-    # plt.title(f'{target}')
-    plt.legend()
-    # defining the attributes
-
-    plt.show()
-
 
 def run_scanPortRange(from_port, to_port, socketio):
     global start
@@ -605,8 +451,6 @@ def run_scanPortRange(from_port, to_port, socketio):
     portsw = []
     In = []
     Out = []
-
-    info_net_dev_oid = '1.3.6.1.2.1.1'  #'1.3.6.1.2.1.1'
 
     target = "194.141.37.238"  #'194.141.40.236'  # IP адрес на вашия суич
     community = "public"  #'public'  # SNMP community string
@@ -658,11 +502,8 @@ def run_scanPortRange(from_port, to_port, socketio):
 
             y1.append(out_err)
 
+            # TODO: map the output to a DTO for readability
             if status == '2':
-
-                # print(
-                #     f"Port({nom}). {port}  ({ifAlias})  is DOWN : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
-                # rez += f"Port({nom}).  {port}  ({ifAlias})  is DOWN : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err},outError {out_err}" + '\n'
                 new_info = {
                         "number": nom,
                         "port": port.prettyPrint(),
@@ -675,12 +516,7 @@ def run_scanPortRange(from_port, to_port, socketio):
                     }
                 # Send info directly via webSocket
                 socketio.emit("runScanPortRange", new_info)
-
             elif status == '1':
-
-                # print(
-                #     f"Port({nom}). {port}  ({ifAlias})  is UP : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}")
-                # rez += f"Port({nom}). {port}  ({ifAlias})  is UP : vlan PVID ({vlan_id}): In={InMbit:.2f}  Mbps , Out={OutMbit:.2f} Mbps ,inError {in_err} ,outError {out_err}" + '\n'
                 new_info = {
                         "number": nom,
                         "port": port.prettyPrint(),
@@ -698,60 +534,6 @@ def run_scanPortRange(from_port, to_port, socketio):
             print(f"Failed to get SNMP data for port {port}")
             # Send info directly via webSocket
             socketio.emit("error", {"error": f"failed to get data for {port}"})
-    # TODO: result has to be mapped to a DTO and passed to the websocked in order to display each row when ready not bulk them all at once
-    # return rez
-    # oid_SysName = '1.3.6.1.2.1.1.5'
-    # SysName = snmp_walk1(target, oid_SysName, community)
-    # Name = SysName
-
-    # print("SysName")
-    # #    print(errData)
-    # a = Name[0].split('=')
-    # print(a[1])
-    # f = lambda x: round(x, 3) if x != 0 else ' '
-
-    # plt.subplot(4, 1, 1)
-    # plt.bar(portsw, y, label='InError', color='blue')
-    # for i in range(len(y)):
-    #     print(f(y[i]))
-    #     plt.annotate(str(f(y[i])), xy=(portsw[i], y[i]), ha='center', va='bottom')
-    # #plt.subplot(4, 1, 1)
-    # plt.ylabel('Входящи  грешки')
-    # #plt.xlabel('Номер на порт')
-
-    # plt.title(f' {target} - ({a[1]})')
-    # plt.legend()
-    # plt.subplot(4, 1, 2)
-    # plt.bar(portsw, y1, label='OutError', color='skyblue')
-    # plt.ylabel('Изходящи грешки')
-
-    # for j in range(len(y1)):
-    #     print(f(y1[j]))
-    #     plt.annotate(str(f(y1[j])), xy=(portsw[j], y1[j]), ha='center', va='bottom')
-    # #plt.xlabel('Номер на порт')
-
-    # #plt.title(f'{target}')
-    # plt.legend()
-    # #plt.subplot(4, 1, 2)
-    # plt.subplot(4, 1, 3)
-    # plt.bar(portsw, In, label='InMbps', color='green')
-    # for k in range(len(In)):
-    #     plt.annotate(str(f(In[k])), xy=(portsw[k], In[k]), ha='center', va='bottom')
-    # plt.ylabel('Входящ трафик (Mbps)')
-    # plt.legend()
-    # plt.subplot(4, 1, 4)
-    # #plt.subplot(4, 1, 3)
-    # plt.bar(portsw, Out, label='OutMbps', color='orange')
-
-    # for m in range(len(Out)):
-    #     plt.annotate(str(f(Out[m])), xy=(portsw[m], Out[m]), ha='center', va='bottom')
-    # plt.xlabel('Номер на порт')
-    # plt.ylabel('Изходящ трафик (Mbps)')
-    # #plt.title(f'{target}')
-    # plt.legend()
-    # # defining the attributes
-
-    # plt.show()
 
 
 def stop():
@@ -759,56 +541,3 @@ def stop():
     global start
     start = False
     #pass
-
-
-# Setting up the Tkinter GUI
-# root = tk.Tk()
-# root.title("Софтуер за мрежови мониторинг ")
-# #logo=tk.PhotoImage(file = 'logo.png')
-# #root.iconphoto(False, logo)
-# root.resizable(True, True)
-# tk.Grid.rowconfigure(root, 3, weight=1)
-# tk.Grid.columnconfigure(root, 3, weight=1)
-# text_oid = tk.StringVar()
-# text_oid.set('1.3.6.1.2.1.1')
-# oid_entry = ttk.Combobox(root,textvariable=text_oid, width=24)#tk.Entry(root, textvariable=text_oid)
-# oid_entry.grid(row=0, column=3, padx=5, pady=5,sticky='nsew')
-# tk.Label(root, text="OID:").grid(row=0, column=2, pady=5, sticky='nsew')
-# # IP address input
-# text_ip = tk.StringVar()
-# fromP = tk.StringVar()
-# ToP = tk.StringVar()
-# disabledPort = tk.StringVar()
-# text_ip.set("194.141.37.238")
-# tk.Label(root, text="IP адрес :").grid(row=0, column=0, padx=10, pady=10,sticky='nsew')
-# ip_entry =ttk.Combobox(root,textvariable=text_ip, width=24) #tk.Entry(root, textvariable=text_ip)
-# ip_entry.grid(row=0, column=1, padx=5, pady=5,sticky='nsew')
-# text_community = tk.StringVar()
-# text_community.set("public")
-
-# # community input
-# tk.Label(root, text="community:").grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
-# community_entry = tk.Entry(root, textvariable=text_community)
-
-# community_entry.grid(row=1, column=1, padx=5, pady=5, sticky='nsew')
-# fromP_enttry = tk.Entry(root, textvariable=fromP).grid(row=2, column=2, padx=10, pady=10, sticky='nsew')
-# To_enttry = tk.Entry(root, textvariable=ToP).grid(row=2, column=3, padx=10, pady=10, sticky='nse')
-# # Submit button
-# submit_button = tk.Button(root, text="Сканиране на диапазон от портове", command=run_scanPortRange)  #run_scan
-# submit_button.grid(row=2, column=0, columnspan=2,padx=10, pady=10, sticky='nsew')
-# submit_button1 = tk.Button(root, text="Спиране на сканирането", command=stop)
-# submit_button1.grid(row=1, column=4, columnspan=1, padx=10, pady=10, sticky='nsew')
-# Info_button = tk.Button(root, text="Извеждане на информация за устройство", command=update_combobox)#show_info
-# Info_button.grid(row=0, column=4, columnspan=1, padx=10, pady=10, sticky='nsew')
-# submit_button3 = tk.Button(root, text="Сканиране на всички портове на у-во", command=run_scan)  #run_scan
-# submit_button3.grid(row=2, column=4, columnspan=2, padx=10, pady=10, sticky='nsew')
-# Port_enttry=tk.Entry(root,textvariable=disabledPort).grid(row=2, column=8,  padx=10, pady=10, sticky='nsew')
-# enable_button3 = tk.Button(root, text="Забраняване на порт", command=disablePort).grid(row=2, column=6,padx=10, pady=10, sticky='nsew')#
-# enable_button4 = tk.Button(root, text="Разрешаване на порт", command=enblePort).grid(row=2, column=7,padx=10, pady=10, sticky='nsew')
-# # Result display)
-# result_text = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=90, height=20)  #, width=100, height=20
-# result_text.grid(row=3, column=0, columnspan=5, sticky='nsew')#padx=10, pady=10,
-# result_text_info = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=80, height=20)  #, width=100, height=20
-# result_text_info.grid(row=3, column=5, columnspan=5,sticky='nsew')#, padx=10, pady=10
-
-# root.mainloop()
