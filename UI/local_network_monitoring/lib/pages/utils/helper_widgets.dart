@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
-import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/themes/theme_cubit.dart';
 import 'package:local_network_monitoring/widgets/button.dart';
 import 'package:local_network_monitoring/widgets/history_textbox.dart';
@@ -130,9 +129,13 @@ class StopScanningButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ApiService service = ApiService();
+
     return CustomButton(
       buttonText: "Спри сканирането",
-      customOnPressed: () {},
+      customOnPressed: () {
+        service.stopRunningProcess();
+      },
       buttonColor: const Color(0xFFD22B2B),
     );
   }
@@ -140,7 +143,7 @@ class StopScanningButton extends StatelessWidget {
 
 // Widget that will be responsible for the output terminals
 class TerminalWidget extends StatelessWidget {
-  final List<PortScanModel> terminalMessages;
+  final List<dynamic> terminalMessages;
   final int flexSpaceToTake;
   const TerminalWidget(
       {super.key,

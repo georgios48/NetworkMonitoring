@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
+import 'package:local_network_monitoring/models/process_dto.dart';
 
 class Terminal extends StatefulWidget {
   final List<dynamic> messages;
@@ -28,6 +29,13 @@ class _TerminalState extends State<Terminal> {
                       // TODO: think of a way to scroll to botton and maybe clear previous terminal on a new call
                       "PortNumber ${output.number}, ${output.port}, status: ${output.ifAlias}, vlan: ${output.vlan}, In: ${output.inSpeed}, Out: ${output.outSpeed}, InError: ${output.inError}, OutError: ${output.outError}\n",
                       style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                } else if (output is ProcessDTO) {
+                  return SelectionArea(
+                    child: Text(
+                      output.process,
+                      style: const TextStyle(color: Colors.red),
                     ),
                   );
                 } else {
