@@ -39,11 +39,9 @@ class ApiService {
 
   // Get info for ports scanned in given range
   Future<void> getInfoForPortsInRange(String fromRange, String toRange) async {
-    final data = {"toPort": '10', "fromPort": "1"};
+    final data = {"fromPort": fromRange, "toPort": toRange};
     final socket = socketService.getSocketChannel();
 
-    socket.emit("/runScanPortRange", {
-      "data": {"fromPort": "1", "toPort": "10"}
-    });
+    socket.emit("/runScanPortRange", {"data": data});
   }
 }
