@@ -4,16 +4,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HistoryTextField extends StatefulWidget {
   final String fieldType;
   final String hintText;
+  final TextEditingController controller;
 
   const HistoryTextField(
-      {super.key, required this.fieldType, required this.hintText});
+      {super.key,
+      required this.fieldType,
+      required this.hintText,
+      required this.controller});
 
   @override
   State<HistoryTextField> createState() => _HistoryTextFieldState();
 }
 
 class _HistoryTextFieldState extends State<HistoryTextField> {
-  final TextEditingController _controller = TextEditingController();
   final List<String> _history = [];
   String? _selectedHistory;
 
@@ -26,7 +29,7 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    widget.controller.dispose();
     super.dispose();
   }
 
@@ -39,7 +42,7 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
 
       if (_history.isNotEmpty) {
         _selectedHistory = _history.first;
-        _controller.text = _selectedHistory!;
+        widget.controller.text = _selectedHistory!;
       }
     });
   }
@@ -81,7 +84,7 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              controller: _controller,
+              controller: widget.controller,
               onChanged: (value) {
                 setState(() {
                   _selectedHistory = null;
@@ -101,7 +104,7 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedHistory = newValue;
-                    _controller.text = newValue!;
+                    widget.controller.text = newValue!;
                   });
                 },
                 selectedItemBuilder: (BuildContext context) {

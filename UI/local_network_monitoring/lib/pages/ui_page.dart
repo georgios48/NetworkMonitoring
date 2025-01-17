@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
-import "package:local_network_monitoring/pages/ui/utils/helper_widgets.dart";
+import "package:local_network_monitoring/pages/utils/helper_widgets.dart";
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:window_manager/window_manager.dart';
 
@@ -14,6 +14,12 @@ class UiPage extends StatefulWidget {
 class _UiPageState extends State<UiPage> {
   late IO.Socket channel;
   List<String> bigTerminalMessages = [];
+
+  // Text Controllers
+  final TextEditingController ipSelectionController = TextEditingController();
+  final TextEditingController oIDSelectionController = TextEditingController();
+  final TextEditingController communitySelectionController =
+      TextEditingController();
 
   @override
   @override
@@ -74,14 +80,15 @@ class _UiPageState extends State<UiPage> {
   @override
   Widget build(BuildContext context) {
     //! By double clicking, return the window into original position
+
     return GestureDetector(
       onDoubleTap: () {
         moveWindowToCenter();
       },
-      child: const SafeArea(
+      child: SafeArea(
         child: Scaffold(
           body: Padding(
-            padding: EdgeInsets.fromLTRB(30, 30, 30, 5),
+            padding: const EdgeInsets.fromLTRB(30, 30, 30, 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -94,34 +101,47 @@ class _UiPageState extends State<UiPage> {
                 Row(
                   children: [
                     Expanded(
-                        child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: IpSelection(),
-                    )),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: IpSelection(
+                          controller: ipSelectionController,
+                        ),
+                      ),
+                    ),
 
                     Expanded(
-                        child: Align(
-                            alignment: Alignment.center,
-                            child: OIdSelection())),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: OIdSelection(
+                          controller: oIDSelectionController,
+                        ),
+                      ),
+                    ),
 
                     // Scan all devices button
                     Expanded(
-                        child: Align(
-                            alignment: Alignment.centerRight,
-                            child: InfoForDeviceButton())),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: InfoForDeviceButton(),
+                      ),
+                    ),
                   ],
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Community and Stop Scan button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
-                        child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: CommunitySelection())),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CommunitySelection(
+                          controller: communitySelectionController,
+                        ),
+                      ),
+                    ),
 
                     // LinearProgressIndicator(
                     //   value: 0.5,
@@ -138,71 +158,20 @@ class _UiPageState extends State<UiPage> {
                   ],
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Scan range of ports
-                Row(
-                  children: [
-                    Expanded(
-                        child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FromPortField(),
-                    )),
+                ScanningPortsElements(),
 
-                    Expanded(
-                      child: Align(
-                          alignment: Alignment.center, child: ToPortField()),
-                    ),
-
-                    // TODO: make button disabled if range isnt provided
-                    // Scan range of ports button and scan all ports button
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ScanRangePorts(),
-                      ),
-                    ),
-
-                    // Scan all ports button
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ScanAllPortsButton(),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Allow/Forbid Port
-                Row(
-                  children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: AllowPortButton(),
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ControlPortField(),
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ForbidPortButton(),
-                      ),
-                    ),
-                  ],
-                ),
+                AllowForbitPortElements(),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
                 // Terminal
-                Expanded(
+                const Expanded(
                   flex: 1,
                   child: Row(
                     children: [
