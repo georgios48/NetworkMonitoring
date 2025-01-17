@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:local_network_monitoring/models/port_scan.dart';
 
-class Terminal extends StatelessWidget {
-  const Terminal({super.key});
+class Terminal extends StatefulWidget {
+  final List<dynamic> messages;
+  const Terminal({super.key, required this.messages});
 
   @override
+  State<Terminal> createState() => _TerminalState();
+}
+
+class _TerminalState extends State<Terminal> {
+  @override
   Widget build(BuildContext context) {
-    List<String> test = List.generate(
-      100, // Generate 100 lines of output
-      (index) =>
-          "Line ${index + 1}: This is a long line of text to test scrolling. "
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
-          "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    );
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -19,15 +19,22 @@ class Terminal extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: test.map((output) {
-              // Make text selectable in the terminal in order to be able to cpy paste
-              return SelectionArea(
-                child: Text(
-                  output,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            }).toList(), // Here's the fix: toList() converts the iterable to a List<Widget>
+            children: widget.messages.map(
+              (output) {
+                // Make text selectable in the terminal in order to be able to cpy paste
+                if (output is PortScanModel) {
+                  return SelectionArea(
+                    child: Text(
+                      // TODO: think of a way to scroll to botton and maybe clear previous terminal on a new call
+                      "PortNumber ${output.number}, ${output.port}, status: ${output.ifAlias}, vlan: ${output.vlan}, In: ${output.inSpeed}, Out: ${output.outSpeed}, InError: ${output.inError}, OutError: ${output.outError}\n",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                } else {
+                  return SelectionArea(child: Text("test"));
+                }
+              },
+            ).toList(), // Here's the fix: toList() converts the iterable to a List<Widget>
           ),
         ),
       ),

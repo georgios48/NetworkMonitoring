@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
+import 'package:local_network_monitoring/models/port_scan.dart';
 import "package:local_network_monitoring/pages/utils/helper_widgets.dart";
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:window_manager/window_manager.dart';
@@ -13,7 +14,8 @@ class UiPage extends StatefulWidget {
 
 class _UiPageState extends State<UiPage> {
   late IO.Socket channel;
-  List<String> bigTerminalMessages = [];
+  List<PortScanModel> bigTerminalMessages = [];
+  List<PortScanModel> smallTerminalMessages = [];
 
   // Text Controllers
   final TextEditingController ipSelectionController = TextEditingController();
@@ -40,9 +42,12 @@ class _UiPageState extends State<UiPage> {
     channel.on(
       "runScanPortRange",
       (data) {
-        // TODO: map the data to a DTO object and append it to a variable or something,
-        // which will be listened by a provider and update the UI if needed
-        print(data);
+        // Update the list of messages
+        PortScanModel portScanModel = PortScanModel.fromJson(data);
+
+        setState(() {
+          bigTerminalMessages.add(portScanModel);
+        });
       },
     );
 
@@ -171,17 +176,19 @@ class _UiPageState extends State<UiPage> {
                 const SizedBox(height: 10),
 
                 // Terminal
-                const Expanded(
+                Expanded(
                   flex: 1,
                   child: Row(
                     children: [
                       TerminalWidget(
                         flexSpaceToTake: 2,
+                        terminalMessages: bigTerminalMessages,
                       ),
-                      SizedBox(width: 5),
+                      const SizedBox(width: 5),
                       Expanded(
                           child: TerminalWidget(
                         flexSpaceToTake: 1,
+                        terminalMessages: smallTerminalMessages,
                       ))
                     ],
                   ),

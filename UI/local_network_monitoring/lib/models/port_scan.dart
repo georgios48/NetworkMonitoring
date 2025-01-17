@@ -25,8 +25,8 @@ class PortScanModel {
       port: json['port'],
       ifAlias: json['ifAlias'],
       vlan: json['vlan'],
-      inSpeed: json['In'],
-      outSpeed: json['Out'],
+      inSpeed: json['In'].toString(), // Convert In to String
+      outSpeed: json['Out'].toString(), // Convert Out to String
       inError: json['inError'],
       outError: json['outError'],
     );

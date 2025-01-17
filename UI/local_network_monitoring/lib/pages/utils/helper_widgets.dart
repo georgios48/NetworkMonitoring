@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
+import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/themes/theme_cubit.dart';
 import 'package:local_network_monitoring/widgets/button.dart';
 import 'package:local_network_monitoring/widgets/history_textbox.dart';
@@ -139,16 +140,20 @@ class StopScanningButton extends StatelessWidget {
 
 // Widget that will be responsible for the output terminals
 class TerminalWidget extends StatelessWidget {
+  final List<PortScanModel> terminalMessages;
   final int flexSpaceToTake;
-  const TerminalWidget({super.key, required this.flexSpaceToTake});
+  const TerminalWidget(
+      {super.key,
+      required this.flexSpaceToTake,
+      required this.terminalMessages});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       flex: flexSpaceToTake,
-      child: const SizedBox(
+      child: SizedBox(
         height: double.infinity,
-        child: Terminal(),
+        child: Terminal(messages: terminalMessages),
       ),
     );
   }
