@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
+import 'package:local_network_monitoring/models/process_dto.dart';
 import "package:local_network_monitoring/pages/utils/helper_widgets.dart";
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:window_manager/window_manager.dart';
@@ -14,7 +15,7 @@ class UiPage extends StatefulWidget {
 
 class _UiPageState extends State<UiPage> {
   late IO.Socket channel;
-  List<PortScanModel> bigTerminalMessages = [];
+  List<dynamic> bigTerminalMessages = [];
   List<PortScanModel> smallTerminalMessages = [];
 
   // Text Controllers
@@ -51,6 +52,16 @@ class _UiPageState extends State<UiPage> {
       },
     );
 
+    // Listen for process info
+    channel.on("process", (process) {
+      // Update terminal messages
+      ProcessDTO processModel = ProcessDTO.fromJson(process);
+
+      setState(() {
+        bigTerminalMessages.add(processModel);
+      });
+    });
+
     // Errors listener
     channel.on(
       "error",
@@ -60,18 +71,6 @@ class _UiPageState extends State<UiPage> {
         print(data);
       },
     );
-
-    // Connection listeners
-    channel.on(
-      "connection",
-      (data) {
-        // TODO: map the data to a DTO object and append it to a variable or something,
-        // which will be listened by a provider and update the UI if needed
-        print(data);
-      },
-    );
-
-    // TODO: Other endpoints listener
   }
 
   @override

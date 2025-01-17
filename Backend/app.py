@@ -1,8 +1,8 @@
 """Flask Application"""
 
-from flask import Flask, json, request
+from flask import Flask, request
 from flask_socketio import SocketIO, emit
-from services.new_monitoring import get_device_info, run_scanPortRange
+from services.new_monitoring import get_device_info, run_scanPortRange, stop
 
 app = Flask(__name__)
 
@@ -29,7 +29,7 @@ def run_scan_port_range(data):
     else:
         run_scanPortRange(from_port, to_port, socketio)
 
-@app.route("/displayDeviceInfo", methods=["POST"])
+@socketio.on("/displayDeviceInfo")
 def display_device_info(data):
     """Displays info for the device"""
 
@@ -41,6 +41,12 @@ def display_device_info(data):
         emit("error", "Invalid oID, IP or community")
     else:
         get_device_info(oid, ip_target, community, socketio)
+
+@socketio.on("/forceStop")
+def stop_process():
+    """Stop executing process"""
+
+    stop(socketio)
 
 # ----- Socket Consumer ----- #
 @socketio.on('connect')

@@ -44,4 +44,11 @@ class ApiService {
 
     socket.emit("/runScanPortRange", {"data": data});
   }
+
+  // Stop process
+  Future<void> stopRunningProcess() async {
+    final socket = socketService.getSocketChannel();
+
+    socket.emit("/forceStop");
+  }
 }

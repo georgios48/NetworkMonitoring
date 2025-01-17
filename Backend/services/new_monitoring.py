@@ -1,10 +1,8 @@
+# pylint: disable=global-statement, broad-exception-caught
 """The process of constantly monitoring a computer network"""
 
 import logging
 import time
-import tkinter as tk
-from tkinter import scrolledtext, ttk
-from tkinter.ttk import *
 
 import matplotlib.pyplot as plt
 from flask import abort
@@ -32,10 +30,18 @@ from pysnmp.smi import builder, compiler, rfc1902, view
 # 2-
 # Name: dot1qVlanStaticUntaggedPorts
 # Oid : 1.3.6.1.2.1.17.7.1.4.3.1.4
-
-start = True
-
 # *
+
+START = True
+
+def stop(socketio):
+    """Stop all process"""
+
+    global START
+    if START:
+        START = False
+
+    socketio.emit("process", {"process": "Process stopped"})
 
 def get_device_info(oid, ip_target, community, socketio):
     """Scan device info"""
@@ -49,7 +55,7 @@ def get_device_info(oid, ip_target, community, socketio):
     try:
         for result in info_net_dev:
             # Break scanning if stop button is pressed
-            if start is False:
+            if START is False:
                 break
 
             device_info = result.split('=')
@@ -91,7 +97,7 @@ def snmp_walk1(ip, oid, community):
 
     results = []
     for error_indicator, error_status, error_index, var_binds in iterator:
-        if start is not True:
+        if START is not True:
             break
         if error_indicator:
             results.append(str(error_indicator))
@@ -101,7 +107,7 @@ def snmp_walk1(ip, oid, community):
             break
 
         for var_bind in var_binds:
-            if start is not True:
+            if START is not True:
                 break
 
             print(f'{var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}')
@@ -109,9 +115,10 @@ def snmp_walk1(ip, oid, community):
 
     return results
 
+# TODO: refactor
 def run_scanPortRange(from_port, to_port, socketio):
-    global start
-    start = True
+    global START
+    START = True
     from_port = (int(from_port) - 1)
     to_port = int(to_port)
     x = []
@@ -143,7 +150,7 @@ def run_scanPortRange(from_port, to_port, socketio):
 
     for port_nom, port in portName[from_port:to_port]:
         # root.update()
-        if start is not True: break
+        if START is not True: break
         nom += 1
         in_octets1 = get_snmp_data(target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
         time.sleep(1)
@@ -408,7 +415,7 @@ def snmp_walk(ip, oid, community):
             break
         else:
             for varBind in varBinds:
-                if start is not True: break
+                if START is not True: break
 
                 nom = str(varBind[0]).split(".")
                 # print(nom[-1])
@@ -438,7 +445,7 @@ def get_snmp_data(target, community, oid, port=161):
         return None
     else:
         for varBind in varBinds:
-            if start is not True: break
+            if START is not True: break
             return int(varBind[1])
 
 
@@ -461,7 +468,7 @@ def get_ifAlias(target, community, oid, port=161):
         return None
     else:
         for varBind in varBinds:
-            if start is not True: break
+            if START is not True: break
             return varBind[1]
 
 
@@ -484,7 +491,7 @@ def get_port_status(snmp_target, community, oid):
         return None
     else:
         for varBind in varBinds:
-            if start is not True: break
+            if START is not True: break
             rez = varBind.prettyPrint().split('=')[1].strip()
             #print(rez)
             return rez
@@ -509,7 +516,7 @@ def get_port_vlan(snmp_target, community, oid):
         return None
     else:
         for varBind in varBinds:
-            if start is not True: break
+            if START is not True: break
             return varBind.prettyPrint().split('=')[1].strip()
 
 
@@ -525,8 +532,8 @@ def bytes_to_megabits(in_octets1, in_octets2):
 def show_info():
     result_text_info.delete(1.0, tk.END)
     root.update()
-    global start
-    start = True
+    global START
+    START = True
     info_net_dev_oid = text_oid.get()  #'1.3.6.1.2.1.1'  # '1.3.6.1.2.1.1'
     target = text_ip.get()  # '194.141.40.236'  # IP адрес на вашия суич
     community = text_community.get()  # 'public'  # SNMP community string
@@ -541,7 +548,7 @@ def show_info():
     #info_net_dev = snmp_walk1(target, info_net_dev_oid, community)
     for result in info_net_dev:
         # root.update()
-        if start is not True: break
+        if START is not True: break
 
         # print(a)
         # mib_files = ['SNMPv2-MIB', 'IF-MIB']  # Примерни MIB файлове
@@ -568,10 +575,3 @@ def show_info():
     # result_text_info.delete(1.0, tk.END)
     # result_text_info.insert(tk.END, rez + '\n')
     root.update()
-
-
-def stop():
-    root.update()
-    global start
-    start = False
-    #pass
