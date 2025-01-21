@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_network_monitoring/models/device_info.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/models/process_dto.dart';
 
@@ -36,6 +37,13 @@ class _TerminalState extends State<Terminal> {
                     child: Text(
                       output.process,
                       style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                } else if (output is DeviceInfoDTO) {
+                  return SelectionArea(
+                    child: Text(
+                      "${output.systemOID} | ${output.systemDevice} ${output.deviceModel}\n",
+                      style: const TextStyle(color: Colors.white),
                     ),
                   );
                 } else {

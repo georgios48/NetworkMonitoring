@@ -6,7 +6,6 @@ from tkinter import scrolledtext, ttk
 from tkinter.ttk import *
 
 import matplotlib.pyplot as plt
-import v2
 from pysnmp.entity import *
 from pysnmp.entity.engine import SnmpEngine
 from pysnmp.hlapi import *

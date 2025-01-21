@@ -3,12 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
-import 'package:local_network_monitoring/themes/theme_cubit.dart';
+import 'package:local_network_monitoring/providers/community_cubit.dart';
+import 'package:local_network_monitoring/providers/ip_cubit.dart';
+import 'package:local_network_monitoring/providers/oid_cubit.dart';
+import 'package:local_network_monitoring/providers/theme_cubit.dart';
 import 'package:local_network_monitoring/widgets/button.dart';
 import 'package:local_network_monitoring/widgets/history_textbox.dart';
 import 'package:local_network_monitoring/widgets/output_terminal.dart';
 
-// ---- Private ----
 class ThemeButton extends StatelessWidget {
   // Change theme button widget
   const ThemeButton({super.key});
@@ -31,54 +33,58 @@ class ThemeButton extends StatelessWidget {
 }
 
 class IpSelection extends StatelessWidget {
-  final TextEditingController controller;
-
-  const IpSelection({super.key, required this.controller});
+  const IpSelection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Text("IP Адрес: ", style: TextStyle(fontWeight: FontWeight.bold)),
+    return BlocBuilder<IpCubit, IpState>(builder: (context, state) {
+      return Row(
+        children: [
+          const Text("IP Адрес: ",
+              style: TextStyle(fontWeight: FontWeight.bold)),
 
-        const SizedBox(width: 20),
+          const SizedBox(width: 20),
 
-        // IP Address text field
-        SizedBox(
-            width: 200,
-            child: HistoryTextField(
-              fieldType: "ipField",
-              hintText: "Въведете IP адрес",
-              controller: controller,
-            ))
-      ],
-    );
+          // IP Address text field
+          SizedBox(
+              width: 200,
+              child: HistoryTextField(
+                fieldType: "ipField",
+                hintText: "Въведете IP адрес",
+                controller: state.ipController,
+              ))
+        ],
+      );
+    });
   }
 }
 
 class OIdSelection extends StatelessWidget {
-  final TextEditingController controller;
-
-  const OIdSelection({super.key, required this.controller});
+  const OIdSelection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Text("Обект ID: ", style: TextStyle(fontWeight: FontWeight.bold)),
+    return BlocBuilder<OidCubit, OidState>(
+      builder: (context, state) {
+        return Row(
+          children: [
+            const Text("Обект ID: ",
+                style: TextStyle(fontWeight: FontWeight.bold)),
 
-        const SizedBox(width: 64),
+            const SizedBox(width: 64),
 
-        // OID Address text field
-        SizedBox(
-            width: 200,
-            child: HistoryTextField(
-              fieldType: "oidField",
-              hintText: "Въведете OID",
-              controller: controller,
-              // borderColor: null,
-            ))
-      ],
+            // OID Address text field
+            SizedBox(
+                width: 200,
+                child: HistoryTextField(
+                  fieldType: "oidField",
+                  hintText: "Въведете OID",
+                  controller: state.oidController,
+                  // borderColor: null,
+                ))
+          ],
+        );
+      },
     );
   }
 }
@@ -88,38 +94,59 @@ class InfoForDeviceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomButton(
-      buttonText: "Извеждане на информация за това устройство",
-      customOnPressed: () {},
+    ApiService service = ApiService();
+    return BlocBuilder<IpCubit, IpState>(
+      builder: (context, ipState) {
+        return BlocBuilder<OidCubit, OidState>(
+          builder: (context, oidState) {
+            return BlocBuilder<CommunityCubit, CommunityState>(
+              builder: (context, communityState) {
+                return CustomButton(
+                  buttonText: "Извеждане на информация за това устройство",
+                  customOnPressed: () {
+                    service.getDeviceInfo(
+                      ipState.ipController.text,
+                      oidState.oidController.text,
+                      communityState.communityController.text,
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
 
 class CommunitySelection extends StatelessWidget {
-  final TextEditingController controller;
-
-  const CommunitySelection({super.key, required this.controller});
+  const CommunitySelection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Text("Community: ",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+    return BlocBuilder<CommunityCubit, CommunityState>(
+      builder: (context, state) {
+        return Row(
+          children: [
+            const Text("Community: ",
+                style: TextStyle(fontWeight: FontWeight.bold)),
 
-        const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-        // Community text field
-        SizedBox(
-          width: 200,
-          child: HistoryTextField(
-            fieldType: "communityField",
-            hintText: "Community",
-            controller: controller,
-            // borderColor: Colors.red,
-          ),
-        ),
-      ],
+            // Community text field
+            SizedBox(
+              width: 200,
+              child: HistoryTextField(
+                fieldType: "communityField",
+                hintText: "Community",
+                controller: state.communityController,
+                // borderColor: Colors.red,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -349,10 +376,22 @@ class _ScanRangePorts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ApiService service = ApiService();
-    return CustomButton(
-      buttonText: "Сканиране на диапазон от портове",
-      customOnPressed: () {
-        service.getInfoForPortsInRange(fromPort, toPort);
+    return BlocBuilder<IpCubit, IpState>(
+      builder: (context, ipState) {
+        return BlocBuilder<CommunityCubit, CommunityState>(
+          builder: (context, communityState) {
+            return CustomButton(
+              buttonText: "Сканиране на диапазон от портове",
+              customOnPressed: () {
+                service.getInfoForPortsInRange(
+                    fromPort,
+                    toPort,
+                    ipState.ipController.text,
+                    communityState.communityController.text);
+              },
+            );
+          },
+        );
       },
     );
   }
@@ -364,10 +403,15 @@ class _ScanAllPortsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ApiService service = ApiService();
-    return CustomButton(
-      buttonText: "Сканиране на всички портове",
-      customOnPressed: () {
-        service.getInfoForPortsInRange("1", "24");
+    return BlocBuilder<IpCubit, IpState>(
+      builder: (context, ipState) {
+        return CustomButton(
+          buttonText: "Сканиране на всички портове",
+          customOnPressed: () {
+            service.getInfoForPortsInRange(
+                "1", "24", ipState.ipController.text, "public");
+          },
+        );
       },
     );
   }

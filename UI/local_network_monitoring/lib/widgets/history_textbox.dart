@@ -43,6 +43,19 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
       if (_history.isNotEmpty) {
         _selectedHistory = _history.first;
         widget.controller.text = _selectedHistory!;
+        // Add default values if first time start
+      } else {
+        if (widget.fieldType == "oidField") {
+          _addToHistory("1.3.6.1.2.1.1");
+          _selectedHistory = _history.first;
+          widget.controller.text = _selectedHistory!;
+        } else if (widget.fieldType == "ipField") {
+          _addToHistory("194.141.37.238");
+          _selectedHistory = _history.first;
+          widget.controller.text = _selectedHistory!;
+        } else if (widget.fieldType == "communityField") {
+          _addToHistory("public");
+        }
       }
     });
   }

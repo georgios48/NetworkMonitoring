@@ -46,6 +46,9 @@ def stop(socketio):
 def get_device_info(oid, ip_target, community, socketio):
     """Scan device info"""
 
+    global START
+    START = True
+
     try:
         info_net_dev = snmp_walk1(ip_target, oid, community)
     except Exception as e:
@@ -69,8 +72,7 @@ def get_device_info(oid, ip_target, community, socketio):
             system_device_description = management_description[1].split('.')
 
             # TODO: use DTO
-            result = {"systemOID": system_oid, "systemDevice": system_device_description, "deviceModel": device_model}
-            print(result)
+            result = {"systemOID": system_oid, "systemDevice": system_device_description[0], "deviceModel": device_model}
 
             socketio.emit("displayDeviceInfo", result)
             time.sleep(0.02)
@@ -110,13 +112,12 @@ def snmp_walk1(ip, oid, community):
             if START is not True:
                 break
 
-            print(f'{var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}')
             results.append(f'{var_bind[0]} = {var_bind[1].prettyPrint()}')
 
     return results
 
 # TODO: refactor
-def run_scanPortRange(from_port, to_port, socketio):
+def run_scanPortRange(from_port, to_port, ip_target, community, socketio):
     global START
     START = True
     from_port = (int(from_port) - 1)
@@ -129,8 +130,6 @@ def run_scanPortRange(from_port, to_port, socketio):
     In = []
     Out = []
 
-    target = "194.141.37.238"  #'194.141.40.236'  # IP адрес на вашия суич
-    community = "public"  #'public'  # SNMP community string
     oid_ifInOctets = '1.3.6.1.2.1.2.2.1.10'  # OID за входящ трафик
     oid_ifOutOctets = '1.3.6.1.2.1.2.2.1.16'  # OID за изходящ трафик
     oid_portName = '1.3.6.1.2.1.2.2.1.2'
@@ -140,7 +139,7 @@ def run_scanPortRange(from_port, to_port, socketio):
     oid_port_inerr = '1.3.6.1.2.1.2.2.1.14'
     oid_ifAlias = '1.3.6.1.2.1.31.1.1.1.18'
     try:
-        portName = snmp_walk(target, oid_portName, community)
+        portName = snmp_walk(ip_target, oid_portName, community)
     except:
         print("Error snmp ....")
     rez = ''
@@ -152,19 +151,19 @@ def run_scanPortRange(from_port, to_port, socketio):
         # root.update()
         if START is not True: break
         nom += 1
-        in_octets1 = get_snmp_data(target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
+        in_octets1 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
         time.sleep(1)
-        in_octets2 = get_snmp_data(target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
+        in_octets2 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
 
-        out_octets1 = get_snmp_data(target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
+        out_octets1 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
         time.sleep(1)
-        out_octets2 = get_snmp_data(target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
-        in_err = get_snmp_data(target, community, f'{oid_port_inerr}.{port_nom[-1]}')
-        out_err = get_snmp_data(target, community, f'{oid_port_outerr}.{port_nom[-1]}')
+        out_octets2 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
+        in_err = get_snmp_data(ip_target, community, f'{oid_port_inerr}.{port_nom[-1]}')
+        out_err = get_snmp_data(ip_target, community, f'{oid_port_outerr}.{port_nom[-1]}')
         # print(in_octets)
-        status = get_port_status(target, community, f'{oid_portStatus}.{port_nom[-1]}')
-        vlan_id = get_port_vlan(target, community, f'{oid_vlan_id_onPort}.{port_nom[-1]}')
-        ifAlias = get_ifAlias(target, community, f'{oid_ifAlias}.{port_nom[-1]}')
+        status = get_port_status(ip_target, community, f'{oid_portStatus}.{port_nom[-1]}')
+        vlan_id = get_port_vlan(ip_target, community, f'{oid_vlan_id_onPort}.{port_nom[-1]}')
+        ifAlias = get_ifAlias(ip_target, community, f'{oid_ifAlias}.{port_nom[-1]}')
         InMbit = bytes_to_megabits(in_octets1, in_octets2)
         OutMbit = bytes_to_megabits(out_octets1, out_octets2)
 
