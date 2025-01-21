@@ -14,7 +14,7 @@ socketio.init_app(app)
 def is_any_none(*args):
     """Checks if any of the element is none"""
 
-    return any(arg is None for arg in args)
+    return any(arg is None or arg == "" for arg in args)
 
 # ----- Endpoints ----- #
 @socketio.on('/runScanPortRange')
@@ -23,11 +23,13 @@ def run_scan_port_range(data):
 
     to_port = data["data"].get("toPort", None)
     from_port = data["data"].get("fromPort", None)
+    ip_target = data["data"].get("ipTarget", None)
+    community = data["data"].get("community", None)
 
     if is_any_none(to_port, from_port):
         emit("error", "Invalid port data - 'from port' or 'to port' cannot be empty")
     else:
-        run_scanPortRange(from_port, to_port, socketio)
+        run_scanPortRange(from_port, to_port, ip_target, community, socketio)
 
 @socketio.on("/displayDeviceInfo")
 def display_device_info(data):
@@ -35,7 +37,7 @@ def display_device_info(data):
 
     oid = data["data"].get("oid", None)
     ip_target = data["data"].get("ipTarget", None)
-    community = data["community"].get("community", None)
+    community = data["data"].get("community", None)
 
     if is_any_none(oid, ip_target, community):
         emit("error", "Invalid oID, IP or community")

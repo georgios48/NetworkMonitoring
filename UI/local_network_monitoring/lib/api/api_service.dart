@@ -38,11 +38,29 @@ class ApiService {
   }
 
   // Get info for ports scanned in given range
-  Future<void> getInfoForPortsInRange(String fromRange, String toRange) async {
-    final data = {"fromPort": fromRange, "toPort": toRange};
+  Future<void> getInfoForPortsInRange(
+      String fromRange, String toRange, String ip, String community) async {
+    final data = {
+      "fromPort": fromRange.trim(),
+      "toPort": toRange.trim(),
+      "ipTarget": ip.trim(),
+      "community": community.trim()
+    };
     final socket = socketService.getSocketChannel();
 
     socket.emit("/runScanPortRange", {"data": data});
+  }
+
+  // Get Device info
+  Future<void> getDeviceInfo(String ip, String oid, String community) async {
+    final data = {
+      "ipTarget": ip.trim(),
+      "oid": oid.trim(),
+      "community": community.trim()
+    };
+    final socket = socketService.getSocketChannel();
+
+    socket.emit("/displayDeviceInfo", {"data": data});
   }
 
   // Stop process

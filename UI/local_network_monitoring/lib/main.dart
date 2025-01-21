@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/pages/ui_page.dart';
-import 'package:local_network_monitoring/themes/theme_cubit.dart';
+import 'package:local_network_monitoring/providers/theme_cubit.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
