@@ -33,6 +33,7 @@ from pysnmp.smi import builder, compiler, rfc1902, view
 # *
 
 START = True
+LOADING = False
 
 def stop(socketio):
     """Stop all process"""
@@ -41,6 +42,12 @@ def stop(socketio):
     if START:
         START = False
 
+        # Update UI loading status
+        global LOADING
+        if LOADING:
+            LOADING = False
+        socketio.emit("loading", {"loading": LOADING})
+
     socketio.emit("process", {"process": "Process stopped"})
 
 def get_device_info(oid, ip_target, community, socketio):
@@ -48,6 +55,11 @@ def get_device_info(oid, ip_target, community, socketio):
 
     global START
     START = True
+
+    # Update UI loading status
+    global LOADING
+    LOADING = True
+    socketio.emit("loading", {"loading": LOADING})
 
     try:
         info_net_dev = snmp_walk1(ip_target, oid, community)
@@ -76,9 +88,16 @@ def get_device_info(oid, ip_target, community, socketio):
 
             socketio.emit("displayDeviceInfo", result)
             time.sleep(0.02)
+
+            if LOADING:
+                LOADING = False
+            socketio.emit("loading", {"loading": LOADING})
     except Exception as e:
         # Send info directly via webSocket
         socketio.emit("error", {"error": str(e)})
+
+        LOADING = False
+        socketio.emit("loading", {"loading": LOADING})
 
 
 def snmp_walk1(ip, oid, community):
@@ -117,9 +136,15 @@ def snmp_walk1(ip, oid, community):
     return results
 
 # TODO: refactor
+# TODO: when stop button is pressed ig goes into failed to get SNMP data condition which is incorrect
 def run_scanPortRange(from_port, to_port, ip_target, community, socketio):
     global START
     START = True
+
+    global LOADING
+    LOADING = True
+    socketio.emit("loading", {"loading": LOADING})
+
     from_port = (int(from_port) - 1)
     to_port = int(to_port)
     x = []
@@ -148,8 +173,15 @@ def run_scanPortRange(from_port, to_port, ip_target, community, socketio):
     rez = {"scanResult": []}
 
     for port_nom, port in portName[from_port:to_port]:
+        if not LOADING:
+            LOADING = True
+            socketio.emit("loading", {"loading": LOADING})
         # root.update()
-        if START is not True: break
+        if START is not True:
+            if LOADING:
+                LOADING = False
+            socketio.emit("loading", {"loading": LOADING})
+            break
         nom += 1
         in_octets1 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
         time.sleep(1)
@@ -206,10 +238,18 @@ def run_scanPortRange(from_port, to_port, ip_target, community, socketio):
                 rez["scanResult"].append(new_info)
                 # Send info directly via webSocket
                 socketio.emit("runScanPortRange", new_info)
+
+                if LOADING:
+                    LOADING = False
+                socketio.emit("loading", {"loading": LOADING})
         else:
             print(f"Failed to get SNMP data for port {port}")
             # Send info directly via webSocket
             socketio.emit("error", {"error": f"failed to get data for {port}"})
+
+            if LOADING:
+                LOADING = False
+            socketio.emit("loading", {"loading": LOADING})
 
 def update_combobox():
     new_value = oid_entry.get()
