@@ -22,6 +22,7 @@ class _UiPageState extends State<UiPage> {
   late IO.Socket channel;
   List<dynamic> bigTerminalMessages = [];
   List<dynamic> smallTerminalMessages = [];
+  bool loadingStatus = false;
 
   @override
   @override
@@ -70,6 +71,18 @@ class _UiPageState extends State<UiPage> {
         bigTerminalMessages.add(processModel);
       });
     });
+
+    // Listen for loading status, responsible for loading bar
+    channel.on(
+      "loading",
+      (loading) {
+        if (loading != null) {
+          setState(() {
+            loadingStatus = loading["loading"];
+          });
+        }
+      },
+    );
 
     // Errors listener
     channel.on(
@@ -146,20 +159,30 @@ class _UiPageState extends State<UiPage> {
                   const SizedBox(height: 20),
 
                   // Community and Stop Scan button
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: CommunitySelection(),
                         ),
                       ),
 
-                      // LinearProgressIndicator(
-                      //   value: 0.5,
-                      //   backgroundColor: Colors.grey,
-                      // ),
+                      // Display loadingBar if loading status
+                      Expanded(
+                        child: loadingStatus
+                            ? const SizedBox(
+                                height: 10,
+                                child: LinearProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.green),
+                                  value: null,
+                                  backgroundColor: Colors.grey,
+                                ),
+                              )
+                            : Container(),
+                      ),
 
                       // Stop scan button
                       Expanded(
