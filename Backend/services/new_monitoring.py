@@ -34,6 +34,15 @@ from pysnmp.smi import builder, compiler, rfc1902, view
 
 START = True
 LOADING = False
+DEVICE_BUSY = False
+PORT_SCAN_BUSYNESS = False
+
+
+def send_clear_terminal(socketio, terminal):
+    """Clear terminal"""
+
+    # Terminal is either big/small
+    socketio.emit("resetTerminal", {"terminal": terminal})
 
 def stop(socketio):
     """Stop all process"""
@@ -48,56 +57,66 @@ def stop(socketio):
             LOADING = False
         socketio.emit("loading", {"loading": LOADING})
 
+        # Clear busy status
+        global DEVICE_BUSY
+        if DEVICE_BUSY:
+            DEVICE_BUSY = False
+        global PORT_SCAN_BUSYNESS
+        if PORT_SCAN_BUSYNESS:
+            PORT_SCAN_BUSYNESS = False
+
     socketio.emit("process", {"process": "Process stopped"})
 
 def get_device_info(oid, ip_target, community, socketio):
     """Scan device info"""
 
-    global START
-    START = True
+    global DEVICE_BUSY
+    if not DEVICE_BUSY:
+        DEVICE_BUSY = True
 
-    # Update UI loading status
-    global LOADING
-    LOADING = True
-    socketio.emit("loading", {"loading": LOADING})
+        global START
+        START = True
 
-    try:
-        info_net_dev = snmp_walk1(ip_target, oid, community)
-    except Exception as e:
-        # Send info directly via webSocket
-        socketio.emit("error", {"error": str(e)})
-
-    try:
-        for result in info_net_dev:
-            # Break scanning if stop button is pressed
-            if START is False:
-                break
-
-            device_info = result.split('=')
-            device_model = device_info[1]
-            system_oid = device_info[0]
-
-            system_description = oid_to_description(system_oid, mib_view)
-
-            management_description = system_description.split('::')
-
-            system_device_description = management_description[1].split('.')
-
-            # TODO: use DTO
-            result = {"systemOID": system_oid, "systemDevice": system_device_description[0], "deviceModel": device_model}
-
-            socketio.emit("displayDeviceInfo", result)
-            time.sleep(0.02)
-
-            if LOADING:
-                LOADING = False
-            socketio.emit("loading", {"loading": LOADING})
-    except Exception as e:
-        # Send info directly via webSocket
-        socketio.emit("error", {"error": str(e)})
-
-        LOADING = False
+        # Update UI loading status
+        global LOADING
+        LOADING = True
         socketio.emit("loading", {"loading": LOADING})
+
+        send_clear_terminal(socketio, "small")
+
+        try:
+            info_net_dev = snmp_walk1(ip_target, oid, community)
+            for result in info_net_dev:
+                # Break scanning if stop button is pressed
+                if START is False:
+                    break
+
+                device_info = result.split('=')
+                device_model = device_info[1]
+                system_oid = device_info[0]
+
+                system_description = oid_to_description(system_oid, mib_view)
+
+                management_description = system_description.split('::')
+
+                system_device_description = management_description[1].split('.')
+
+                # TODO: use DTO
+                result = {"systemOID": system_oid, "systemDevice": system_device_description[0], "deviceModel": device_model}
+
+                socketio.emit("displayDeviceInfo", result)
+                time.sleep(0.02)
+
+                if LOADING:
+                    LOADING = False
+                socketio.emit("loading", {"loading": LOADING})
+        except Exception as e:
+            # Send info directly via webSocket
+            socketio.emit("error", {"error": str(e)})
+            LOADING = False
+            socketio.emit("loading", {"loading": LOADING})
+        finally:
+            DEVICE_BUSY = False
 
 
 def snmp_walk1(ip, oid, community):
@@ -138,133 +157,127 @@ def snmp_walk1(ip, oid, community):
 # TODO: refactor
 # TODO: when stop button is pressed ig goes into failed to get SNMP data condition which is incorrect
 def run_scanPortRange(from_port, to_port, ip_target, community, socketio):
-    global START
-    START = True
+    global PORT_SCAN_BUSYNESS
+    if not PORT_SCAN_BUSYNESS:
+        PORT_SCAN_BUSYNESS = True
 
-    global LOADING
-    LOADING = True
-    socketio.emit("loading", {"loading": LOADING})
+        global START
+        START = True
 
-    from_port = (int(from_port) - 1)
-    to_port = int(to_port)
-    x = []
-    x1 = []
-    y = []
-    y1 = []
-    portsw = []
-    In = []
-    Out = []
+        global LOADING
+        LOADING = True
+        socketio.emit("loading", {"loading": LOADING})
 
-    oid_ifInOctets = '1.3.6.1.2.1.2.2.1.10'  # OID за входящ трафик
-    oid_ifOutOctets = '1.3.6.1.2.1.2.2.1.16'  # OID за изходящ трафик
-    oid_portName = '1.3.6.1.2.1.2.2.1.2'
-    oid_portStatus = '1.3.6.1.2.1.2.2.1.8'
-    oid_vlan_id_onPort = '1.3.6.1.2.1.17.7.1.4.5.1.1'
-    oid_port_outerr = '1.3.6.1.2.1.2.2.1.20'
-    oid_port_inerr = '1.3.6.1.2.1.2.2.1.14'
-    oid_ifAlias = '1.3.6.1.2.1.31.1.1.1.18'
-    try:
-        portName = snmp_walk(ip_target, oid_portName, community)
-    except:
-        print("Error snmp ....")
-    rez = ''
-    nom = from_port
+        send_clear_terminal(socketio, "big")
 
-    rez = {"scanResult": []}
+        from_port = (int(from_port) - 1)
+        to_port = int(to_port)
+        x = []
+        x1 = []
+        y = []
+        y1 = []
+        portsw = []
+        In = []
+        Out = []
 
-    for port_nom, port in portName[from_port:to_port]:
-        if not LOADING:
-            LOADING = True
-            socketio.emit("loading", {"loading": LOADING})
-        # root.update()
-        if START is not True:
-            if LOADING:
-                LOADING = False
-            socketio.emit("loading", {"loading": LOADING})
-            break
-        nom += 1
-        in_octets1 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
-        time.sleep(1)
-        in_octets2 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
+        oid_ifInOctets = '1.3.6.1.2.1.2.2.1.10'  # OID за входящ трафик
+        oid_ifOutOctets = '1.3.6.1.2.1.2.2.1.16'  # OID за изходящ трафик
+        oid_portName = '1.3.6.1.2.1.2.2.1.2'
+        oid_portStatus = '1.3.6.1.2.1.2.2.1.8'
+        oid_vlan_id_onPort = '1.3.6.1.2.1.17.7.1.4.5.1.1'
+        oid_port_outerr = '1.3.6.1.2.1.2.2.1.20'
+        oid_port_inerr = '1.3.6.1.2.1.2.2.1.14'
+        oid_ifAlias = '1.3.6.1.2.1.31.1.1.1.18'
+        try:
+            portName = snmp_walk(ip_target, oid_portName, community)
+            
+            nom = from_port
+            rez = {"scanResult": []}
 
-        out_octets1 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
-        time.sleep(1)
-        out_octets2 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
-        in_err = get_snmp_data(ip_target, community, f'{oid_port_inerr}.{port_nom[-1]}')
-        out_err = get_snmp_data(ip_target, community, f'{oid_port_outerr}.{port_nom[-1]}')
-        # print(in_octets)
-        status = get_port_status(ip_target, community, f'{oid_portStatus}.{port_nom[-1]}')
-        vlan_id = get_port_vlan(ip_target, community, f'{oid_vlan_id_onPort}.{port_nom[-1]}')
-        ifAlias = get_ifAlias(ip_target, community, f'{oid_ifAlias}.{port_nom[-1]}')
-        InMbit = bytes_to_megabits(in_octets1, in_octets2)
-        OutMbit = bytes_to_megabits(out_octets1, out_octets2)
+            for port_nom, port in portName[from_port:to_port]:
+                if not LOADING:
+                    LOADING = True
+                    socketio.emit("loading", {"loading": LOADING})
+                # root.update()
+                if START is not True:
+                    if LOADING:
+                        LOADING = False
+                    socketio.emit("loading", {"loading": LOADING})
+                    break
+                nom += 1
+                in_octets1 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
+                time.sleep(1)
+                in_octets2 = get_snmp_data(ip_target, community, f'{oid_ifInOctets}.{port_nom[-1]}')
 
-        if in_octets1 is not None and out_octets1 is not None and nom is not None and InMbit is not None and OutMbit is not None and in_err is not None and out_err is not None:
+                out_octets1 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
+                time.sleep(1)
+                out_octets2 = get_snmp_data(ip_target, community, f'{oid_ifOutOctets}.{port_nom[-1]}')
+                in_err = get_snmp_data(ip_target, community, f'{oid_port_inerr}.{port_nom[-1]}')
+                out_err = get_snmp_data(ip_target, community, f'{oid_port_outerr}.{port_nom[-1]}')
+                # print(in_octets)
+                status = get_port_status(ip_target, community, f'{oid_portStatus}.{port_nom[-1]}')
+                vlan_id = get_port_vlan(ip_target, community, f'{oid_vlan_id_onPort}.{port_nom[-1]}')
+                ifAlias = get_ifAlias(ip_target, community, f'{oid_ifAlias}.{port_nom[-1]}')
+                InMbit = bytes_to_megabits(in_octets1, in_octets2)
+                OutMbit = bytes_to_megabits(out_octets1, out_octets2)
 
-            portsw.append('(' + str(nom) + ')')
-            In.append(InMbit)
+                if in_octets1 is not None and out_octets1 is not None and nom is not None and InMbit is not None and OutMbit is not None and in_err is not None and out_err is not None:
 
-            Out.append(OutMbit)
+                    portsw.append('(' + str(nom) + ')')
+                    In.append(InMbit)
 
-            y.append(in_err)
+                    Out.append(OutMbit)
 
-            y1.append(out_err)
+                    y.append(in_err)
 
-            # TODO: map the output to a DTO for readability
-            if status == '2':
-                new_info = {
-                        "number": nom,
-                        "port": port.prettyPrint(),
-                        "ifAlias": f"{ifAlias.prettyPrint()} is DOWN",
-                        "vlan": f"PVID ({vlan_id})",
-                        "In": f"{InMbit:.2f} Mbps",
-                        "Out": f"{OutMbit:.2f} Mbps",
-                        "inError": in_err,
-                        "outError": out_err
-                    }
-                # Send info directly via webSocket
-                socketio.emit("runScanPortRange", new_info)
-            elif status == '1':
-                new_info = {
-                        "number": nom,
-                        "port": port.prettyPrint(),
-                        "ifAlias": f"{ifAlias.prettyPrint()} is UP",
-                        "vlan": f"PVID ({vlan_id})",
-                        "In": f"{InMbit:.2f} Mbps",
-                        "Out": f"{OutMbit:.2f} Mbps",
-                        "inError": in_err,
-                        "outError": out_err
-                    }
-                rez["scanResult"].append(new_info)
-                # Send info directly via webSocket
-                socketio.emit("runScanPortRange", new_info)
+                    y1.append(out_err)
 
-                if LOADING:
-                    LOADING = False
-                socketio.emit("loading", {"loading": LOADING})
-        else:
-            print(f"Failed to get SNMP data for port {port}")
-            # Send info directly via webSocket
-            socketio.emit("error", {"error": f"failed to get data for {port}"})
+                    # TODO: map the output to a DTO for readability
+                    if status == '2':
+                        new_info = {
+                                "number": nom,
+                                "port": port.prettyPrint(),
+                                "ifAlias": f"{ifAlias.prettyPrint()} is DOWN",
+                                "vlan": f"PVID ({vlan_id})",
+                                "In": f"{InMbit:.2f} Mbps",
+                                "Out": f"{OutMbit:.2f} Mbps",
+                                "inError": in_err,
+                                "outError": out_err
+                            }
+                        # Send info directly via webSocket
+                        socketio.emit("runScanPortRange", new_info)
+                    elif status == '1':
+                        new_info = {
+                                "number": nom,
+                                "port": port.prettyPrint(),
+                                "ifAlias": f"{ifAlias.prettyPrint()} is UP",
+                                "vlan": f"PVID ({vlan_id})",
+                                "In": f"{InMbit:.2f} Mbps",
+                                "Out": f"{OutMbit:.2f} Mbps",
+                                "inError": in_err,
+                                "outError": out_err
+                            }
+                        rez["scanResult"].append(new_info)
+                        # Send info directly via webSocket
+                        socketio.emit("runScanPortRange", new_info)
 
-            if LOADING:
-                LOADING = False
-            socketio.emit("loading", {"loading": LOADING})
+                        if LOADING:
+                            LOADING = False
+                        socketio.emit("loading", {"loading": LOADING})
+                else:
+                    print(f"Failed to get SNMP data for port {port}")
+                    # Send info directly via webSocket
+                    socketio.emit("error", {"error": f"failed to get data for {port}"})
 
-def update_combobox():
-    new_value = oid_entry.get()
-    values = list(oid_entry.cget("values")) or []
-    if new_value not in values:
-        values.append(new_value)
-        oid_entry.configure(values=values)
-    show_info()
-def update_comboboxIP():
-    new_value = ip_entry.get()
-    values = list(ip_entry.cget("values")) or []
-    if new_value not in values:
-        values.append(new_value)
-        ip_entry.configure(values=values)
+                    if LOADING:
+                        LOADING = False
+                    socketio.emit("loading", {"loading": LOADING})
+        except Exception as e:
+            socketio.emit("error", {"error": str(e)})
+        finally:
+            PORT_SCAN_BUSYNESS = False
 
+        
 
 def get_ifAdminStatus(host, port, community):
     """
