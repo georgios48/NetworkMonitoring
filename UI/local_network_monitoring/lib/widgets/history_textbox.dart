@@ -80,7 +80,7 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
       case "ipHistory":
         return _isValidIP(widget.controller.text);
       case "oidField":
-        return _isValidOID(widget.controller.text);
+        return widget.controller.text.isNotEmpty;
       case "communityField":
         return widget.controller.text.isNotEmpty;
       default:
@@ -95,12 +95,6 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
         _saveHistory();
       }
     }
-  }
-
-  bool _isValidOID(String oid) {
-    final regex = RegExp(
-        r"^(?:[0-2](?:\.[1-9]\d{0,4})|\d(?:\.\d{1,4})){1,9}\.[0-9]{1,4}$");
-    return regex.hasMatch(oid);
   }
 
   bool _isValidIP(String ip) {

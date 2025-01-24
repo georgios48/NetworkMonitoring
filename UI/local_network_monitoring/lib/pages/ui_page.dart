@@ -67,9 +67,17 @@ class _UiPageState extends State<UiPage> {
       // Update terminal messages
       ProcessDTO processModel = ProcessDTO.fromJson(process);
 
-      setState(() {
-        bigTerminalMessages.add(processModel);
-      });
+      // Avoid stopped process dublication message
+      if (processModel.process == "Process stopped" &&
+              bigTerminalMessages.isEmpty ||
+          bigTerminalMessages.last is ProcessDTO &&
+              bigTerminalMessages.last.process == "Process stopped") {
+        return;
+      } else {
+        setState(() {
+          bigTerminalMessages.add(processModel);
+        });
+      }
     });
 
     // Listener for a new action in order to reset terminals
