@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:local_network_monitoring/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HistoryTextField extends StatefulWidget {
@@ -6,11 +10,12 @@ class HistoryTextField extends StatefulWidget {
   final String hintText;
   final TextEditingController controller;
 
-  const HistoryTextField(
-      {super.key,
-      required this.fieldType,
-      required this.hintText,
-      required this.controller});
+  const HistoryTextField({
+    super.key,
+    required this.fieldType,
+    required this.hintText,
+    required this.controller,
+  });
 
   @override
   State<HistoryTextField> createState() => _HistoryTextFieldState();
@@ -19,59 +24,106 @@ class HistoryTextField extends StatefulWidget {
 class _HistoryTextFieldState extends State<HistoryTextField> {
   final List<String> _history = [];
   String? _selectedHistory;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    // Load history from storage
     _loadHistory();
   }
 
   @override
   void dispose() {
     widget.controller.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadHistory() async {
-    // Load history from storage
-    final preferences = await SharedPreferences.getInstance();
+  void _appendDefaultHistory() {
+    switch (widget.fieldType) {
+      case "ipHistory":
+        _history.add(defaultIp);
+      case "oidField":
+        _history.add(defaultOID);
+      case "communityField":
+        _history.add(defaultCommunity);
+      case "fromPortField":
+        _history.add(defaultFromPort);
+      case "toPortField":
+        _history.add(defaultToPort);
+      case "controlPortField":
+        _history.add(defaultFromPort);
+    }
+  }
 
+  Future<void> _loadHistory() async {
+    final preferences = await SharedPreferences.getInstance();
     setState(() {
       _history.addAll(preferences.getStringList(widget.fieldType) ?? []);
-
       if (_history.isNotEmpty) {
         _selectedHistory = _history.first;
         widget.controller.text = _selectedHistory!;
-        // Add default values if first time start
       } else {
-        if (widget.fieldType == "oidField") {
-          _addToHistory("1.3.6.1.2.1.1");
-          _selectedHistory = _history.first;
-          widget.controller.text = _selectedHistory!;
-        } else if (widget.fieldType == "ipField") {
-          _addToHistory("194.141.37.238");
-          _selectedHistory = _history.first;
-          widget.controller.text = _selectedHistory!;
-        } else if (widget.fieldType == "communityField") {
-          _addToHistory("public");
-        }
+        _appendDefaultHistory();
+        _saveHistory();
       }
     });
   }
 
   Future<void> _saveHistory() async {
-    // Save history to storage
     final preferences = await SharedPreferences.getInstance();
     preferences.setStringList(widget.fieldType, _history);
   }
 
+  bool _isValidObject(String fieldType) {
+    switch (fieldType) {
+      case "ipHistory":
+        return _isValidIP(widget.controller.text);
+      case "oidField":
+        return _isValidOID(widget.controller.text);
+      case "communityField":
+        return widget.controller.text.isNotEmpty;
+      default:
+        return false;
+    }
+  }
+
   void _addToHistory(String text) {
     if (text.isNotEmpty && !_history.contains(text)) {
-      _history.insert(0, text);
-      // Save history to storage
-      _saveHistory();
+      if (_isValidObject(widget.fieldType)) {
+        _history.insert(0, text);
+        _saveHistory();
+      }
     }
+  }
+
+  bool _isValidOID(String oid) {
+    final regex = RegExp(
+        r"^(?:[0-2](?:\.[1-9]\d{0,4})|\d(?:\.\d{1,4})){1,9}\.[0-9]{1,4}$");
+    return regex.hasMatch(oid);
+  }
+
+  bool _isValidIP(String ip) {
+    final ipv4Regex = RegExp(
+        r'^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$');
+
+    return ipv4Regex.hasMatch(ip);
+  }
+
+  void _onChanged(String value) {
+    // Handles adding result to history with a little delay so user can finish input
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () {
+        _addToHistory(value);
+        setState(
+          () {
+            _selectedHistory = null;
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -90,28 +142,19 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
               cursorColor: Theme.of(context).dividerColor,
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: widget.hintText,
                 hintStyle: const TextStyle(
-                  overflow: TextOverflow.ellipsis,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
                 ),
+                hintText: widget.hintText,
               ),
               controller: widget.controller,
-              onChanged: (value) {
-                setState(() {
-                  _selectedHistory = null;
-                });
-              },
-              onSubmitted: (value) {
-                _addToHistory(value);
-              },
+              onChanged: _onChanged,
             ),
           ),
           SizedBox(
-            width: 50,
+            width: 30,
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
+              child: DropdownButton2(
                 isExpanded: true,
                 value: _selectedHistory,
                 onChanged: (String? newValue) {
@@ -121,19 +164,44 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
                   });
                 },
                 selectedItemBuilder: (BuildContext context) {
-                  return _history.map<Widget>((String value) {
-                    return Container();
+                  // Return empty containers or a placeholder for the button
+                  return _history.map((String value) {
+                    return const SizedBox.shrink(); // Keeps the button empty
                   }).toList();
                 },
-                items: _history.map<DropdownMenuItem<String>>((String value) {
+                items: _history.map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(
                       value,
-                      textAlign: TextAlign.left,
+                      style: const TextStyle(fontSize: 12),
                     ),
                   );
                 }).toList(),
+                buttonStyleData: const ButtonStyleData(
+                  width: 30,
+                  height: 40,
+                  padding: EdgeInsets.all(0), // Compact padding
+                ),
+                dropdownStyleData: const DropdownStyleData(
+                  maxHeight: 200,
+                  width: 150,
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(5)),
+                    color: Colors.white, // Dropdown background color
+                  ),
+                  elevation: 2, // Shadow
+                ),
+                menuItemStyleData: const MenuItemStyleData(
+                  height: 40, // Height of each menu item
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+                iconStyleData: const IconStyleData(
+                  icon: Icon(Icons.arrow_drop_down),
+                  iconSize: 16,
+                  iconEnabledColor: Colors.black,
+                ),
               ),
             ),
           ),

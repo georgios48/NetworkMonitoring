@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
@@ -68,5 +69,10 @@ class ApiService {
     final socket = socketService.getSocketChannel();
 
     socket.emit("/forceStop");
+  }
+
+  Future<void> clearAllSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }
