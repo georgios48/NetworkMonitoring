@@ -27,7 +27,6 @@ class _TerminalState extends State<Terminal> {
                 if (output is PortScanModel) {
                   return SelectionArea(
                     child: Text(
-                      // TODO: think of a way to scroll to botton and maybe clear previous terminal on a new call
                       "PortNumber ${output.number}, ${output.port}, status: ${output.ifAlias}, vlan: ${output.vlan}, In: ${output.inSpeed}, Out: ${output.outSpeed}, InError: ${output.inError}, OutError: ${output.outError}\n",
                       style: const TextStyle(color: Colors.white),
                     ),
@@ -47,7 +46,7 @@ class _TerminalState extends State<Terminal> {
                     ),
                   );
                 } else {
-                  return SelectionArea(child: Text("test"));
+                  return const SelectionArea(child: Text("test"));
                 }
               },
             ).toList(), // Here's the fix: toList() converts the iterable to a List<Widget>

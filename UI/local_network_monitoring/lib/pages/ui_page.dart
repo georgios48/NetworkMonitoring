@@ -72,6 +72,22 @@ class _UiPageState extends State<UiPage> {
       });
     });
 
+    // Listener for a new action in order to reset terminals
+    channel.on(
+      "resetTerminal",
+      (data) {
+        if (data["terminal"] == "big") {
+          setState(() {
+            bigTerminalMessages = [];
+          });
+        } else if (data["terminal"] == "small") {
+          setState(() {
+            smallTerminalMessages = [];
+          });
+        }
+      },
+    );
+
     // Listen for loading status, responsible for loading bar
     channel.on(
       "loading",
@@ -152,7 +168,7 @@ class _UiPageState extends State<UiPage> {
                         ),
                       ),
 
-                      Expanded(
+                      const Expanded(
                         child: Align(
                           alignment: Alignment.center,
                           child: OIdSelection(),
@@ -160,7 +176,7 @@ class _UiPageState extends State<UiPage> {
                       ),
 
                       // Scan all devices button
-                      Expanded(
+                      const Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: InfoForDeviceButton(),
