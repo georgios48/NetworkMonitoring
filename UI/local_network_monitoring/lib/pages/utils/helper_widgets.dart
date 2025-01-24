@@ -32,8 +32,27 @@ class ThemeButton extends StatelessWidget {
   }
 }
 
+class ResetPreferencesButton extends StatelessWidget {
+  const ResetPreferencesButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    ApiService service = ApiService();
+    return CustomButton(
+      buttonText: "Изтриване на всички запазени данни",
+      customOnPressed: () {
+        service.clearAllSharedPreferences();
+      },
+      buttonColor: const Color(0xFFD22B2B),
+    );
+  }
+}
+
 class IpSelection extends StatelessWidget {
-  const IpSelection({super.key});
+  IpSelection({super.key});
+
+  final String _fieldType = "ipHistory";
+  final FocusNode focusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -42,17 +61,15 @@ class IpSelection extends StatelessWidget {
         children: [
           const Text("IP Адрес: ",
               style: TextStyle(fontWeight: FontWeight.bold)),
-
           const SizedBox(width: 20),
-
-          // IP Address text field
           SizedBox(
-              width: 200,
-              child: HistoryTextField(
-                fieldType: "ipField",
-                hintText: "Въведете IP адрес",
-                controller: state.ipController,
-              ))
+            width: 200,
+            child: HistoryTextField(
+              controller: state.ipController,
+              hintText: "Въведете IP адрес",
+              fieldType: _fieldType,
+            ),
+          )
         ],
       );
     });
@@ -327,7 +344,7 @@ class _FromPortField extends StatelessWidget {
       children: [
         const Text("От порт: ", style: TextStyle(fontWeight: FontWeight.bold)),
 
-        const SizedBox(width: 20),
+        const SizedBox(width: 25),
 
         // From port text field
         SizedBox(

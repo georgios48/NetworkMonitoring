@@ -124,13 +124,26 @@ class _UiPageState extends State<UiPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Change theme button
-                  const ThemeButton(),
+                  // Change theme button and reset preferences
+                  const Row(
+                    children: [
+                      Expanded(
+                          child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ThemeButton(),
+                      )),
+                      Expanded(
+                          child: Align(
+                        alignment: Alignment.centerRight,
+                        child: ResetPreferencesButton(),
+                      )),
+                    ],
+                  ),
 
                   const SizedBox(height: 20),
 
                   // IP address selection and OID selection
-                  const Row(
+                  Row(
                     children: [
                       Expanded(
                         child: Align(
@@ -185,7 +198,7 @@ class _UiPageState extends State<UiPage> {
                       ),
 
                       // Stop scan button
-                      Expanded(
+                      const Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: StopScanningButton(),
