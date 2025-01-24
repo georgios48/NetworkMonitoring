@@ -307,7 +307,6 @@ class _ScanningPortsElementsState extends State<ScanningPortsElements> {
           ),
         ),
 
-        // TODO: make button disabled if range isnt provided
         // Scan range of ports button and scan all ports button
         Expanded(
           child: Align(
