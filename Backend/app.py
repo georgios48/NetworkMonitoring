@@ -1,8 +1,11 @@
+# pylint: disable=import-error
 """Flask Application"""
 
-from flask import Flask, request
+from flask import Flask
 from flask_socketio import SocketIO, emit
-from services.new_monitoring import get_device_info, run_scanPortRange, stop
+from services.network_monitoring import (disable_port, enable_port,
+                                         get_device_info,
+                                         perform_port_range_scan, stop)
 
 app = Flask(__name__)
 
@@ -27,9 +30,9 @@ def run_scan_port_range(data):
     community = data["data"].get("community", None)
 
     if is_any_none(to_port, from_port):
-        emit("error", "Invalid port data - 'from port' or 'to port' cannot be empty")
+        emit("error", {"error": "Invalid port data - 'from port' or 'to port' cannot be empty"})
     else:
-        run_scanPortRange(from_port, to_port, ip_target, community, socketio)
+        perform_port_range_scan(from_port, to_port, ip_target, community, socketio)
 
 @socketio.on("/displayDeviceInfo")
 def display_device_info(data):
@@ -40,7 +43,7 @@ def display_device_info(data):
     community = data["data"].get("community", None)
 
     if is_any_none(oid, ip_target, community):
-        emit("error", "Invalid oID, IP or community")
+        emit("error", {"error": "Invalid oID, IP or community"})
     else:
         get_device_info(oid, ip_target, community, socketio)
 
@@ -49,6 +52,32 @@ def stop_process():
     """Stop executing process"""
 
     stop(socketio)
+
+@socketio.on("/enablePort")
+def enable_snmp_port(data):
+    """Enable port"""
+
+    ip_target = data["data"].get("ipTarget", None)
+    community = data["data"].get("community", None)
+    port_to_enable = data["data"].get("portToEnable", None)
+
+    if is_any_none(ip_target, community, port_to_enable):
+        emit("error", {"error": "Invalid IP, community or portToEnable"})
+    else:
+        enable_port(socketio, ip_target, community, port_to_enable)
+
+@socketio.on("/disablePort")
+def disable_snmp_port(data):
+    """Disable port"""
+
+    ip_target = data["data"].get("ipTarget", None)
+    community = data["data"].get("community", None)
+    port_to_enable = data["data"].get("portToEnable", None)
+
+    if is_any_none(ip_target, community, port_to_enable):
+        emit("error", {"error": "Invalid IP, community or portToEnable"})
+    else:
+        disable_port(socketio, ip_target, community, port_to_enable)
 
 # ----- Socket Consumer ----- #
 @socketio.on('connect')
