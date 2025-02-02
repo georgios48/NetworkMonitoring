@@ -30,7 +30,7 @@ def run_scan_port_range(data):
     community = data["data"].get("community", None)
 
     if is_any_none(to_port, from_port):
-        emit("error", {"error": "Invalid port data - 'from port' or 'to port' cannot be empty"})
+        emit("error", {"bigTerminalError": "Invalid port data - 'from port' or 'to port' cannot be empty"})
     else:
         perform_port_range_scan(from_port, to_port, ip_target, community, socketio)
 
@@ -43,7 +43,7 @@ def display_device_info(data):
     community = data["data"].get("community", None)
 
     if is_any_none(oid, ip_target, community):
-        emit("error", {"error": "Invalid oID, IP or community"})
+        emit("error", {"bigTerminalError": "Invalid oID, IP or community"})
     else:
         get_device_info(oid, ip_target, community, socketio)
 
@@ -62,7 +62,7 @@ def enable_snmp_port(data):
     port_to_enable = data["data"].get("portToEnable", None)
 
     if is_any_none(ip_target, community, port_to_enable):
-        emit("error", {"error": "Invalid IP, community or portToEnable"})
+        emit("error", {"smallTerminalError": "Invalid IP, community or portToEnable"})
     else:
         enable_port(socketio, ip_target, community, port_to_enable)
 
@@ -75,7 +75,7 @@ def disable_snmp_port(data):
     port_to_enable = data["data"].get("portToEnable", None)
 
     if is_any_none(ip_target, community, port_to_enable):
-        emit("error", {"error": "Invalid IP, community or portToEnable"})
+        emit("error", {"smallTerminalError": "Invalid IP, community or portToEnable"})
     else:
         disable_port(socketio, ip_target, community, port_to_enable)
 

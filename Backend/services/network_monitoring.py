@@ -142,34 +142,12 @@ def get_device_info(oid, ip_target, community, socketio):
                 socketio.emit("loading", {"loading": LOADING})
         except Exception as e:
             # Send info directly via webSocket
-            socketio.emit("error", {"error": str(e)})
+            socketio.emit("error", {"smallTerminalError": str(e)})
             LOADING = False
             socketio.emit("loading", {"loading": LOADING})
         finally:
             DEVICE_BUSY = False
 
-
-def send_port_scan_info(status, is_alias, port_number, port, vlan_id, in_mbit, out_mbit, in_err, out_err, socketio):
-    """Check port status and send a message to WebSocket according to the status"""
-
-    if status in ("1", "2"):
-        alias_info = f"{is_alias.prettyPrint()} is UP" if status == "1" else f"{is_alias.prettyPrint()} is DOWN"
-
-        new_info = PortScanDTO(
-            number=port_number,
-            port=port.prettyPrint(),
-            ifAlias=alias_info,
-            vlan=f"PVID ({vlan_id})",
-            In=f"{in_mbit:.2f} Mbps",
-            Out=f"{out_mbit:.2f} Mbps",
-            inError=in_err,
-            outError=out_err,
-        )
-
-        # Send info directly via webSocket
-        socketio.emit("runScanPortRange", new_info.to_dict())
-
-        stop_loading(socketio)
 
 def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
     """Perform port scan in a range or all ports, return detailed info"""
@@ -184,9 +162,6 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
 
         send_clear_terminal(socketio, "big")
 
-        from_port = int(from_port) - 1
-        to_port = int(to_port)
-
         # TODO: Used for matPlot
         in_errors = []
         out_errors = []
@@ -195,6 +170,9 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
         out_mbits = []
 
         try:
+            from_port = int(from_port) - 1
+            to_port = int(to_port)
+
             port_name = snmp_walk(ip_target, OID_PORT_NAME, community)
 
             port_number = from_port
@@ -241,11 +219,12 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
                     if START:
                         logging.error("Failed to get SNMP data for port %s", port)
                         # Send info directly via webSocket
-                        socketio.emit("error", {"error": f"failed to get data for {port}"})
+                        socketio.emit("error", {"bigTerminalError": f"failed to get data for {port}"})
 
                     stop_loading(socketio)
         except Exception as e:
-            socketio.emit("error", {"error": str(e)})
+            stop_loading(socketio)
+            socketio.emit("error", {"bigTerminalError": str(e)})
         finally:
             PORT_SCAN_BUSYNESS = False
 
@@ -268,10 +247,10 @@ def disable_port(socketio, ip_target, community, port_to_disable):
     )
 
     if error_indication:
-        socketio.emit("error", {"error": str(error_indication)})
+        socketio.emit("error", {"smallTerminalError": str(error_indication)})
     elif error_status:
         message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
-        socketio.emit("error", {"error": message})
+        socketio.emit("error", {"smallTerminalError": message})
     else:
         message = f"Port {port_to_disable} on {ip_target} has been disabled."
         socketio.emit("portAccess", message)
@@ -298,10 +277,10 @@ def enable_port(socketio, ip_target, community, port_to_enable):
     )
 
     if error_indication:
-        socketio.emit("error", {"error": str(error_indication)})
+        socketio.emit("error", {"smallTerminalError": str(error_indication)})
     elif error_status:
         message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
-        socketio.emit("error", {"error": message})
+        socketio.emit("error", {"smallTerminalError": message})
     else:
         message = f"Port {port_to_enable} on {ip_target} has been enabled."
         socketio.emit("portAccess", message)
@@ -369,7 +348,7 @@ def oid_to_description(socketio, oid):
         oid.resolveWithMib(mib_view)
     except Exception as e:
         logging.error("An exception occurred", exc_info=True)
-        socketio.emit("error", {"error": str(e)})
+        socketio.emit("error", {"smallTerminalError": str(e)})
 
     return oid.prettyPrint()
 
@@ -521,3 +500,25 @@ def snmp_walk1(ip, oid, community):
             results.append(f'{var_bind[0]} = {var_bind[1].prettyPrint()}')
 
     return results
+
+def send_port_scan_info(status, is_alias, port_number, port, vlan_id, in_mbit, out_mbit, in_err, out_err, socketio):
+    """Check port status and send a message to WebSocket according to the status"""
+
+    if status in ("1", "2"):
+        alias_info = f"{is_alias.prettyPrint()} is UP" if status == "1" else f"{is_alias.prettyPrint()} is DOWN"
+
+        new_info = PortScanDTO(
+            number=port_number,
+            port=port.prettyPrint(),
+            ifAlias=alias_info,
+            vlan=f"PVID ({vlan_id})",
+            In=f"{in_mbit:.2f} Mbps",
+            Out=f"{out_mbit:.2f} Mbps",
+            inError=in_err,
+            outError=out_err,
+        )
+
+        # Send info directly via webSocket
+        socketio.emit("runScanPortRange", new_info.to_dict())
+
+        stop_loading(socketio)
