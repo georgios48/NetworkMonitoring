@@ -7,7 +7,7 @@ analyse-fallback-blocks=no
 
 # Clear in-memory caches upon conclusion of linting. Useful if running pylint
 # in a server-like mode.
-clear-cache-post-run=no
+clear-cache-post-run=yes
 
 # Load and enable all available extensions. Use --list-extensions to see a list
 # all available extensions.
@@ -93,7 +93,7 @@ prefer-stubs=no
 
 # Minimum Python version to use for version dependent checks. Will default to
 # the version used to run pylint.
-py-version=3.13
+py-version=3.11.1
 
 # Discover python modules and packages in the file system subtree.
 recursive=no
@@ -290,7 +290,7 @@ exclude-too-few-public-methods=
 ignored-parents=
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=10
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
@@ -302,13 +302,13 @@ max-bool-expr=5
 max-branches=12
 
 # Maximum number of locals for function / method body.
-max-locals=15
+max-locals=30
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7
 
 # Maximum number of positional arguments for function / method.
-max-positional-arguments=5
+; max-positional-arguments=10
 
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20
@@ -317,7 +317,7 @@ max-public-methods=20
 max-returns=6
 
 # Maximum number of statements in function / method body.
-max-statements=50
+max-statements=60
 
 # Minimum number of public methods for a class (see R0903).
 min-public-methods=2
