@@ -83,6 +83,18 @@ class _HistoryTextFieldState extends State<HistoryTextField> {
         return widget.controller.text.isNotEmpty;
       case "communityField":
         return widget.controller.text.isNotEmpty;
+      case "fromPortField":
+        // Check if it is int parsable and not empty
+        return widget.controller.text.isNotEmpty &&
+            int.tryParse(widget.controller.text) != null;
+      case "toPortField":
+        // Check if it is int parsable and not empty
+        return widget.controller.text.isNotEmpty &&
+            int.tryParse(widget.controller.text) != null;
+      case "controlPortField":
+        // Check if it is int parsable and not empty
+        return widget.controller.text.isNotEmpty &&
+            int.tryParse(widget.controller.text) != null;
       default:
         return false;
     }
