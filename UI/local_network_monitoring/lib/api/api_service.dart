@@ -52,6 +52,28 @@ class ApiService {
     socket.emit("/runScanPortRange", {"data": data});
   }
 
+  Future<void> forbidPort(String ip, String community, String port) async {
+    final data = {
+      "ipTarget": ip.trim(),
+      "community": community.trim(),
+      "portToDisable": port.trim()
+    };
+    final socket = socketService.getSocketChannel();
+
+    socket.emit("/disablePort", {"data": data});
+  }
+
+  Future<void> allowPort(String ip, String community, String port) async {
+    final data = {
+      "ipTarget": ip.trim(),
+      "community": community.trim(),
+      "portToEnable": port.trim()
+    };
+    final socket = socketService.getSocketChannel();
+
+    socket.emit("/enablePort", {"data": data});
+  }
+
   // Get Device info
   Future<void> getDeviceInfo(String ip, String oid, String community) async {
     final data = {

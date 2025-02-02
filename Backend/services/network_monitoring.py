@@ -10,7 +10,9 @@ from models import DeviceInfoDTO, PortScanDTO
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd,
                           nextCmd, setCmd)
+from pysnmp.proto.rfc1902 import Integer
 from pysnmp.smi import builder, compiler, rfc1902, view
+from pysnmp.smi.error import NoSuchObjectError
 
 # *
 # 1.3.6.1.2.1.2.2.1.2 port name
@@ -222,6 +224,10 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
                         socketio.emit("error", {"bigTerminalError": f"failed to get data for {port}"})
 
                     stop_loading(socketio)
+        except ValueError:
+            stop_loading(socketio)
+            message = f"Invalid port range, numbers only: {from_port} - {to_port}"
+            socketio.emit("error", {"bigTerminalError": message})
         except Exception as e:
             stop_loading(socketio)
             socketio.emit("error", {"bigTerminalError": str(e)})
@@ -231,61 +237,93 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
 def disable_port(socketio, ip_target, community, port_to_disable):
     """Disable port switch by SNMP Setting"""
 
-    # OID for ifAdminStatus with given port ifIndex
-    oid = f'1.3.6.1.2.1.2.2.1.7.{port_to_disable}'
+    set_start()
 
-    # Value for disabling the port switch (2 = down)
-    value = 2
+    start_loading(socketio)
 
-    # SNMP set operation
-    error_indication, error_status, error_index, var_binds = next(
-        setCmd(SnmpEngine(),
-               CommunityData(community, mpModel=0),
-               UdpTransportTarget((ip_target, 161)),
-               ContextData(),
-               ObjectType(ObjectIdentity(oid), value))
-    )
+    send_clear_terminal(socketio, "small")
 
-    if error_indication:
-        socketio.emit("error", {"smallTerminalError": str(error_indication)})
-    elif error_status:
-        message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
+    try:
+
+        # OID for ifAdminStatus with given port ifIndex
+        oid = f'1.3.6.1.2.1.2.2.1.7.{port_to_disable}'
+
+        # Value for disabling the port switch (2 = down)
+        value = Integer(2)
+
+        # SNMP set operation
+        error_indication, error_status, error_index, var_binds = next(
+            setCmd(SnmpEngine(),
+                CommunityData(community, mpModel=0),
+                UdpTransportTarget((ip_target, 161)),
+                ContextData(),
+                ObjectType(ObjectIdentity(oid), value))
+        )
+
+        if error_indication:
+            socketio.emit("error", {"smallTerminalError": str(error_indication)})
+        elif error_status:
+            message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
+            socketio.emit("error", {"smallTerminalError": message})
+        else:
+            message = f"Port {port_to_disable} on {ip_target} has been disabled."
+            socketio.emit("portAccess", message)
+
+            display_port_status(socketio, ip_target, community)
+    except NoSuchObjectError:
+        stop_loading(socketio)
+        message = f"Invalid port range, numbers only: {port_to_disable}"
         socketio.emit("error", {"smallTerminalError": message})
-    else:
-        message = f"Port {port_to_disable} on {ip_target} has been disabled."
-        socketio.emit("portAccess", message)
-
-        display_port_status(socketio, ip_target, community)
+    except Exception as e:
+        logging.error("An exception occurred", exc_info=True)
+        socketio.emit("error", {"smallTerminalError": str(e)})
+        stop_loading(socketio)
 
 
 def enable_port(socketio, ip_target, community, port_to_enable):
     """Enable port switch by SNMP Setting"""
 
-    # OID for ifAdminStatus with given port ifIndex
-    oid = f'1.3.6.1.2.1.2.2.1.7.{port_to_enable}'
+    set_start()
 
-    # Value for disabling the port switch (1 = Up)
-    value = 1
+    start_loading(socketio)
 
-    # SNMP set operation
-    error_indication, error_status, error_index, var_binds = next(
-        setCmd(SnmpEngine(),
-               CommunityData(community, mpModel=0),
-               UdpTransportTarget((ip_target, 161)),
-               ContextData(),
-               ObjectType(ObjectIdentity(oid), value))
-    )
+    send_clear_terminal(socketio, "small")
 
-    if error_indication:
-        socketio.emit("error", {"smallTerminalError": str(error_indication)})
-    elif error_status:
-        message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
+    try:
+
+        # OID for ifAdminStatus with given port ifIndex
+        oid = f'1.3.6.1.2.1.2.2.1.7.{port_to_enable}'
+
+        # Value for disabling the port switch (1 = Up)
+        value = Integer(1)
+
+        # SNMP set operation
+        error_indication, error_status, error_index, var_binds = next(
+            setCmd(SnmpEngine(),
+                CommunityData(community, mpModel=0),
+                UdpTransportTarget((ip_target, 161)),
+                ContextData(),
+                ObjectType(ObjectIdentity(oid), value))
+        )
+
+        if error_indication:
+            socketio.emit("error", {"smallTerminalError": str(error_indication)})
+        elif error_status:
+            message = f"Error: {error_status.prettyPrint()} at {error_index and var_binds[int(error_index) - 1][0] or '?'}"
+            socketio.emit("error", {"smallTerminalError": message})
+        else:
+            message = f"Port {port_to_enable} on {ip_target} has been enabled."
+            socketio.emit("portAccess", message)
+
+            display_port_status(socketio, ip_target, community)
+    except NoSuchObjectError:
+        stop_loading(socketio)
+        message = f"Invalid port range, numbers only: {port_to_enable}"
         socketio.emit("error", {"smallTerminalError": message})
-    else:
-        message = f"Port {port_to_enable} on {ip_target} has been enabled."
-        socketio.emit("portAccess", message)
-
-        display_port_status(socketio, ip_target, community)
+    except Exception as e:
+        logging.error("An exception occurred", exc_info=True)
+        socketio.emit("error", {"smallTerminalError": str(e)})
+        stop_loading(socketio)
 
 
 # --------------------------------- Helper Functions --------------------------------- #

@@ -236,10 +236,10 @@ class _AllowForbitPortElementsState extends State<AllowForbitPortElements> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Align(
             alignment: Alignment.centerLeft,
-            child: _AllowPortButton(),
+            child: _AllowPortButton(portSelectionController.text),
           ),
         ),
         Expanded(
@@ -248,10 +248,10 @@ class _AllowForbitPortElementsState extends State<AllowForbitPortElements> {
             child: _ControlPortField(controller: portSelectionController),
           ),
         ),
-        const Expanded(
+        Expanded(
           child: Align(
             alignment: Alignment.centerRight,
-            child: _ForbidPortButton(),
+            child: _ForbidPortButton(portSelectionController.text),
           ),
         ),
       ],
@@ -434,15 +434,25 @@ class _ScanAllPortsButton extends StatelessWidget {
 }
 
 class _AllowPortButton extends StatelessWidget {
-  const _AllowPortButton();
+  final String portToAllow;
+  const _AllowPortButton(this.portToAllow);
 
   @override
   Widget build(BuildContext context) {
-    return CustomButton(
-      buttonText: "Разрешаване на порт",
-      customOnPressed: () {},
-      buttonColor: Colors.green,
-    );
+    ApiService service = ApiService();
+    return BlocBuilder<IpCubit, IpState>(builder: (context, ipState) {
+      return BlocBuilder<CommunityCubit, CommunityState>(
+          builder: (context, communityState) {
+        return CustomButton(
+          buttonText: "Разрешаване на порт",
+          customOnPressed: () {
+            service.allowPort(ipState.ipController.text,
+                communityState.communityController.text, portToAllow);
+          },
+          buttonColor: Colors.green,
+        );
+      });
+    });
   }
 }
 
@@ -474,14 +484,24 @@ class _ControlPortField extends StatelessWidget {
 }
 
 class _ForbidPortButton extends StatelessWidget {
-  const _ForbidPortButton();
+  final String portToForbid;
+  const _ForbidPortButton(this.portToForbid);
 
   @override
   Widget build(BuildContext context) {
-    return CustomButton(
-      buttonText: "Забраняване на порт",
-      customOnPressed: () {},
-      buttonColor: const Color(0xFFD22B2B),
-    );
+    ApiService service = ApiService();
+    return BlocBuilder<IpCubit, IpState>(builder: (context, ipState) {
+      return BlocBuilder<CommunityCubit, CommunityState>(
+          builder: (context, communityState) {
+        return CustomButton(
+          buttonText: "Забраняване на порт",
+          customOnPressed: () {
+            service.forbidPort(ipState.ipController.text,
+                communityState.communityController.text, portToForbid);
+          },
+          buttonColor: const Color(0xFFD22B2B),
+        );
+      });
+    });
   }
 }
