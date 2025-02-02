@@ -72,12 +72,12 @@ def disable_snmp_port(data):
 
     ip_target = data["data"].get("ipTarget", None)
     community = data["data"].get("community", None)
-    port_to_enable = data["data"].get("portToEnable", None)
+    port_to_disable = data["data"].get("portToDisable", None)
 
-    if is_any_none(ip_target, community, port_to_enable):
-        emit("error", {"smallTerminalError": "Invalid IP, community or portToEnable"})
+    if is_any_none(ip_target, community, port_to_disable):
+        emit("error", {"smallTerminalError": "Invalid IP, community or portToDisable"})
     else:
-        disable_port(socketio, ip_target, community, port_to_enable)
+        disable_port(socketio, ip_target, community, port_to_disable)
 
 # ----- Socket Consumer ----- #
 @socketio.on('connect')
