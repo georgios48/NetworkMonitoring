@@ -4,6 +4,7 @@ import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/models/device_info.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/models/process_dto.dart';
+import 'package:local_network_monitoring/models/terminal_error_dto.dart';
 import "package:local_network_monitoring/pages/utils/helper_widgets.dart";
 import 'package:local_network_monitoring/providers/community_cubit.dart';
 import 'package:local_network_monitoring/providers/ip_cubit.dart';
@@ -112,9 +113,16 @@ class _UiPageState extends State<UiPage> {
     channel.on(
       "error",
       (data) {
-        // TODO: map the data to a DTO object and append it to a variable or something,
-        // which will be listened by a provider and update the UI if needed
-        print(data);
+        TerminalError terminalError = TerminalError.fromJson(data);
+        if (data.containsKey("smallTerminalError")) {
+          setState(() {
+            smallTerminalMessages.add(terminalError);
+          });
+        } else if (data.containsKey("bigTerminalError")) {
+          setState(() {
+            bigTerminalMessages.add(terminalError);
+          });
+        }
       },
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/models/device_info.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/models/process_dto.dart';
+import 'package:local_network_monitoring/models/terminal_error_dto.dart';
 
 class Terminal extends StatefulWidget {
   final List<dynamic> messages;
@@ -45,8 +46,19 @@ class _TerminalState extends State<Terminal> {
                       style: const TextStyle(color: Colors.white),
                     ),
                   );
+                } else if (output is TerminalError) {
+                  return SelectionArea(
+                    child: Text(
+                      output.smallTerminalError ??
+                          output.bigTerminalError ??
+                          "Unknown error",
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
                 } else {
-                  return const SelectionArea(child: Text("test"));
+                  return const SelectionArea(
+                      child: Text("Something went wrong",
+                          style: TextStyle(color: Colors.red)));
                 }
               },
             ).toList(), // Here's the fix: toList() converts the iterable to a List<Widget>
