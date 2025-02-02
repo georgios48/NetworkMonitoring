@@ -5,8 +5,9 @@
 import logging
 import time
 
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from models import DeviceInfoDTO, PortScanDTO
+from plotly.subplots import make_subplots
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd,
                           nextCmd, setCmd)
@@ -164,7 +165,6 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
 
         send_clear_terminal(socketio, "big")
 
-        # TODO: Used for matPlot
         in_errors = []
         out_errors = []
         portsw = []
@@ -232,6 +232,7 @@ def perform_port_range_scan(from_port, to_port, ip_target, community, socketio):
             stop_loading(socketio)
             socketio.emit("error", {"bigTerminalError": str(e)})
         finally:
+            plot_graph(ip_target, community, portsw, in_errors, out_errors, in_mbits, out_mbits)
             PORT_SCAN_BUSYNESS = False
 
 def disable_port(socketio, ip_target, community, port_to_disable):
@@ -325,6 +326,102 @@ def enable_port(socketio, ip_target, community, port_to_enable):
         socketio.emit("error", {"smallTerminalError": str(e)})
         stop_loading(socketio)
 
+# --------------------------------- MatPlotLib --------------------------------- #
+def plot_graph(ip_target, community, portsw, in_errors, out_errors, in_mbits, out_mbits):
+    """Generate Plotly graph"""
+
+    oid_system_name = '1.3.6.1.2.1.1.5'
+    sys_name = snmp_walk1(ip_target, oid_system_name, community)
+    name = sys_name
+
+    a = name[0].split('=')
+
+    def f(x):
+        return round(x, 3) if x != 0 else ' '
+
+    # Create a subplot with 4 rows and 1 column
+    fig = make_subplots(
+        rows=4, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.1,
+        subplot_titles=[
+            'In Errors', 
+            'Out Errors', 
+            'In Traffic (Mbps)', 
+            'Out Traffic (Mbps)'
+        ]
+    )
+
+    # In Errors Bar Plot
+    fig.add_trace(
+        go.Bar(
+            x=portsw,
+            y=in_errors,
+            name='InError',
+            marker=dict(color='blue'),
+            text=[str(f(val)) for val in in_errors],
+            textposition='outside'
+        ),
+        row=1, col=1
+    )
+
+    # Out Errors Bar Plot
+    fig.add_trace(
+        go.Bar(
+            x=portsw,
+            y=out_errors,
+            name='OutError',
+            marker=dict(color='skyblue'),
+            text=[str(f(val)) for val in out_errors],
+            textposition='outside'
+        ),
+        row=2, col=1
+    )
+
+    # In Mbps Bar Plot
+    fig.add_trace(
+        go.Bar(
+            x=portsw,
+            y=in_mbits,
+            name='InMbps',
+            marker=dict(color='green'),
+            text=[str(f(val)) for val in in_mbits],
+            textposition='outside'
+        ),
+        row=3, col=1
+    )
+
+    # Out Mbps Bar Plot
+    fig.add_trace(
+        go.Bar(
+            x=portsw,
+            y=out_mbits,
+            name='OutMbps',
+            marker=dict(color='orange'),
+            text=[str(f(val)) for val in out_mbits],
+            textposition='outside'
+        ),
+        row=4, col=1
+    )
+
+    # Update layout for the entire figure
+    fig.update_layout(
+        title=f'{ip_target} - ({a[1]})',
+        height=1000,
+        showlegend=True,
+        title_x=0.5,
+        xaxis_title='Ports',
+        yaxis_title='Values',
+    )
+
+    # Update y-axes for each subplot
+    fig.update_yaxes(title_text="Входящи грешки", row=1, col=1)
+    fig.update_yaxes(title_text="Изходящи грешки", row=2, col=1)
+    fig.update_yaxes(title_text="Входящ трафик (Mbps)", row=3, col=1)
+    fig.update_yaxes(title_text="Изходящ трафик (Mbps)", row=4, col=1)
+
+    # Show the figure
+    fig.show()
 
 # --------------------------------- Helper Functions --------------------------------- #
 def get_admin_status(host, port, community):

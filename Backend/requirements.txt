@@ -1,6 +1,6 @@
 Flask==3.1.0
 Flask_SocketIO==5.5.1
-matplotlib==3.10.0
+plotly==6.0.0
 pydantic==2.10.6
 pysnmp==4.4.12
 pysnmp-apps==0.5.3
