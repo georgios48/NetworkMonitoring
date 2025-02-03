@@ -8,21 +8,28 @@ Engine • revision edd8546116
 Tools • Dart 3.4.3 • DevTools 2.34.3
 
 To run backend:
-    1. Create venv:
-        ```python -m venv venv```
-        Or if using "pyenv":
-            ```1. pyenv install 3.11.1```
-            ```2. /Users/yourname/.pyenv/versions/3.10.9/bin/python -m venv venv```
+    Start via docker:
+        1. Execute in root:
+            build the container: ```docker build -t network_monitor .```
+            create and run: ```docker run -it --rm -p 8001:8001 --name network_monitor_container network_monitor```
+            if container exists: ```docker start network_monitor_container```
 
-    2. Start venv:
-        On MacOS: ```source venv/bin/activate```
-        On Windows: ```source venv/Scripts/activate```
-    3. Install the python requirements:
-        ```pip install -r Backend/requirements.txt```
-    4. Make sure the correct python interpretes is selected.
-    5. Start the service:
-        1. Go to "Backend" directory and execute:
-            ```python app.py```
+    Start manually:
+        1. Create venv:
+            ```python -m venv venv```
+            Or if using "pyenv":
+                ```1. pyenv install 3.11.1```
+                ```2. /Users/yourname/.pyenv/versions/3.10.9/bin/python -m venv venv```
+
+        2. Start venv:
+            On MacOS: ```source venv/bin/activate```
+            On Windows: ```source venv/Scripts/activate```
+        3. Install the python requirements:
+            ```pip install -r Backend/requirements.txt```
+        4. Make sure the correct python interpretes is selected.
+        5. Start the service:
+            1. Go to "Backend" directory and execute:
+                ```python app.py```
 
 To run UI:
     1. Make sure no leftovers in the project are left:
