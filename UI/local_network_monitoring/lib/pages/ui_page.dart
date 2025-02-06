@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
@@ -9,7 +11,9 @@ import "package:local_network_monitoring/pages/utils/helper_widgets.dart";
 import 'package:local_network_monitoring/providers/community_cubit.dart';
 import 'package:local_network_monitoring/providers/ip_cubit.dart';
 import 'package:local_network_monitoring/providers/oid_cubit.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 class UiPage extends StatefulWidget {
@@ -125,6 +129,30 @@ class _UiPageState extends State<UiPage> {
         }
       },
     );
+
+    // Listener for plotly graph
+    channel.on(
+      "htmlData",
+      (data) async {
+        // If it's an HTML content
+        String filePath = await _saveHtmlToFile(data["html"]);
+        _openFileInBrowser(filePath);
+      },
+    );
+  }
+
+  Future<String> _saveHtmlToFile(String htmlContent) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/webpage.html');
+    await file.writeAsString(htmlContent);
+    return file.path;
+  }
+
+  Future<void> _openFileInBrowser(String filePath) async {
+    final uri = Uri.file(filePath);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 
   @override
@@ -268,7 +296,7 @@ class _UiPageState extends State<UiPage> {
                         ))
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
