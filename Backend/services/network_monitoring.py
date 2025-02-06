@@ -428,11 +428,11 @@ def plot_graph(ip_target, community, portsw, in_errors, out_errors, in_mbits, ou
         # Send the HTML to the webSocket
         with open("Backend/templates/index.html", "r", encoding="utf8") as file:
             html_content = file.read()
-            socketio.emit("htmlData", {"html": html_content}, broadcast=True)
+            socketio.emit("htmlData", {"html": html_content})
     except FileNotFoundError:
-        socketio.emit('error', {'bigTerminalError': 'HTML file not found'}, broadcast=True)
+        socketio.emit('error', {'bigTerminalError': 'HTML file not found'})
     except Exception as e:
-        socketio.emit('error', {'bigTerminalError': str(e)}, broadcast=True)
+        socketio.emit('error', {'bigTerminalError': str(e)})
 
 
 # --------------------------------- Helper Functions --------------------------------- #
