@@ -10,8 +10,8 @@ COPY Backend /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port Flask runs on (change if needed)
-EXPOSE 8001
+# Expose the port Flask runs on
+EXPOSE 8001 8050 62079
 
 # Run Flask app
 CMD ["python", "app.py"]

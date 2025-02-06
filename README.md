@@ -11,7 +11,7 @@ To run backend:
     Start via docker:
         1. Execute in root:
             build the container: ```docker build -t network_monitor .```
-            create and run: ```docker run -it --rm -p 8001:8001 --name network_monitor_container network_monitor```
+            create and run: ```docker run -it --rm -p 8001:8001 -p 8050:8050 -p 62079:62079 --name network_monitor_container network_monitor```
             if container exists: ```docker start network_monitor_container```
 
     Start manually:
