@@ -424,19 +424,10 @@ def plot_graph(ip_target, community, portsw, in_errors, out_errors, in_mbits, ou
         fig.update_yaxes(title_text="Изходящ трафик (Mbps)", row=4, col=1)
 
         # Show the figure
-        file_path = "Backend/templates/index.html"
-        pio.write_html(fig, file_path)
-
-        # Force file sync to ensure it's actually written
-        os.sync()
+        html_content = pio.to_html(fig)
 
         # Send the HTML to the webSocket
-        file_path = os.path.abspath("Backend/templates/index.html")
-        with open("app/Backend/templates/index.html", "r", encoding="utf8") as file:
-            html_content = file.read()
-            socketio.emit("htmlData", {"html": html_content})
-    except FileNotFoundError:
-        socketio.emit('error', {'bigTerminalError': 'HTML file not found'})
+        socketio.emit("htmlData", {"html": html_content})
     except Exception as e:
         socketio.emit('error', {'bigTerminalError': str(e)})
 
