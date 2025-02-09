@@ -1,6 +1,7 @@
 // ----------------- Helper Widgets for UI Page -----------------
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/providers/community_cubit.dart';
@@ -35,13 +36,67 @@ class ThemeButton extends StatelessWidget {
 class ResetPreferencesButton extends StatelessWidget {
   const ResetPreferencesButton({super.key});
 
+  void _deleteSavedData() {
+    ApiService service = ApiService();
+    service.clearAllSharedPreferences();
+  }
+
+  void _showDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Изтриване на всички запазени данни"),
+          content: const Text("Искате ли да изтриете всички запазени данни?"),
+          actions: [
+            MaterialButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Отказ"),
+            ),
+            MaterialButton(
+              onPressed: () {
+                _deleteSavedData();
+                Navigator.of(context).pop();
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text("Всички данни бяха изтрити!"),
+                        content:
+                            const Text("Нужно е да затворите приложението"),
+                        actions: [
+                          MaterialButton(
+                            onPressed: () {
+                              SystemNavigator.pop();
+                            },
+                            child: const Text("Затвори"),
+                          ),
+                          MaterialButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Отказ"),
+                          )
+                        ],
+                      );
+                    });
+              },
+              child: const Text("Изтрий"),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    ApiService service = ApiService();
     return CustomButton(
       buttonText: "Изтриване на всички запазени данни",
       customOnPressed: () {
-        service.clearAllSharedPreferences();
+        _showDialog(context);
       },
       buttonColor: const Color(0xFFD22B2B),
     );
