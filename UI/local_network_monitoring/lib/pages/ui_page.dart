@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_network_monitoring/api/api_service.dart';
 import 'package:local_network_monitoring/models/device_info.dart';
+import 'package:local_network_monitoring/models/port_access_dto.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/models/process_dto.dart';
 import 'package:local_network_monitoring/models/terminal_error_dto.dart';
@@ -137,6 +138,19 @@ class _UiPageState extends State<UiPage> {
         // If it's an HTML content
         String filePath = await _saveHtmlToFile(data["html"]);
         _openFileInBrowser(filePath);
+      },
+    );
+
+    // Listener for allow/forbit port
+    channel.on(
+      "portAccess",
+      (data) {
+        if (data.toString().isNotEmpty) {
+          PortAccessDTO portAccess = PortAccessDTO.fromString(data);
+          setState(() {
+            smallTerminalMessages.add(portAccess);
+          });
+        }
       },
     );
   }

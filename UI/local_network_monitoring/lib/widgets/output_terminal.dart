@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_network_monitoring/models/device_info.dart';
+import 'package:local_network_monitoring/models/port_access_dto.dart';
 import 'package:local_network_monitoring/models/port_scan.dart';
 import 'package:local_network_monitoring/models/process_dto.dart';
 import 'package:local_network_monitoring/models/terminal_error_dto.dart';
@@ -55,6 +56,8 @@ class _TerminalState extends State<Terminal> {
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
+                } else if (output is PortAccessDTO) {
+                  return SelectionArea(child: Text(output.message));
                 } else {
                   return const SelectionArea(
                       child: Text("Something went wrong",
