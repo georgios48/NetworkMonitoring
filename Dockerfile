@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy only the Backend folder into the container
 COPY Backend /app
 
+# Ensure /app/templates is writable by all users
+RUN chmod -R 777 /app/templates
+
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
