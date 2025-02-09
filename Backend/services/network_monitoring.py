@@ -3,6 +3,7 @@
 """The process of constantly monitoring a computer network"""
 
 import logging
+import os
 import time
 
 import plotly.graph_objects as go
@@ -423,10 +424,15 @@ def plot_graph(ip_target, community, portsw, in_errors, out_errors, in_mbits, ou
         fig.update_yaxes(title_text="Изходящ трафик (Mbps)", row=4, col=1)
 
         # Show the figure
-        pio.write_html(fig, "Backend/templates/index.html")
+        file_path = "Backend/templates/index.html"
+        pio.write_html(fig, file_path)
+
+        # Force file sync to ensure it's actually written
+        os.sync()
 
         # Send the HTML to the webSocket
-        with open("Backend/templates/index.html", "r", encoding="utf8") as file:
+        file_path = os.path.abspath("Backend/templates/index.html")
+        with open("app/Backend/templates/index.html", "r", encoding="utf8") as file:
             html_content = file.read()
             socketio.emit("htmlData", {"html": html_content})
     except FileNotFoundError:

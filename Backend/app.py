@@ -95,4 +95,4 @@ def handle_disconnect():
     emit('connection', {"connection": "Disconnected from WebSocket!"})
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", debug=True, port=8001)
+    socketio.run(app, host="0.0.0.0", debug=True, port=8001, use_reloader=False)
