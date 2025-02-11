@@ -3,3 +3,5 @@ venv/
 
 Backend/templates/*
 !Backend/templates/.gitkeep
+
+.vscode
