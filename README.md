@@ -1,4 +1,13 @@
 # local_network_monitoring
+
+# Install as User
+Navigate to the "installers" folder and download the installer according to your platform
+
+Follow the installation guide.
+
+$${\color{red}!! \space Currently \space the \space container \space is \space not \space hosted \space on \space a \space cloud, \space so \space in \space order \space to \space run \space the \space app, \space you \space need \space to \space start \space a \space docker, \space which \space runs \space the \space backend \space !!}$$
+
+# Install as Developer
 Diploma project, local network monitoring using PYSNMP and Flutter for the UI
 
 Python version used: 3.11.1
