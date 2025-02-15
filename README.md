@@ -1,5 +1,3 @@
-# local_network_monitoring
-
 # Install as User
 Navigate to the "installers" folder and download the installer according to your platform
 
