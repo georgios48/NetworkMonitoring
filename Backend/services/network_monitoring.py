@@ -3,7 +3,6 @@
 """The process of constantly monitoring a computer network"""
 
 import logging
-import os
 import time
 
 import plotly.graph_objects as go

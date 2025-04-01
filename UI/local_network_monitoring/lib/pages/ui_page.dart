@@ -122,10 +122,20 @@ class _UiPageState extends State<UiPage> {
         if (data.containsKey("smallTerminalError")) {
           setState(() {
             smallTerminalMessages.add(terminalError);
+            if (loadingStatus) {
+              setState(() {
+                loadingStatus = false;
+              });
+            }
           });
         } else if (data.containsKey("bigTerminalError")) {
           setState(() {
             bigTerminalMessages.add(terminalError);
+            if (loadingStatus) {
+              setState(() {
+                loadingStatus = false;
+              });
+            }
           });
         }
       },
